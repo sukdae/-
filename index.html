@@ -329,6 +329,11 @@ body.titled header, body.titled .hud, body.titled .rel, body.titled footer { dis
   body.playing .srcpop { top: 168px; }
   body.playing .menu { padding-top: 164px; }
 }
+
+/* 수치가 오르내릴 때 ▲▼는 칸 오른쪽 위에 겹쳐 띄워, 그림 줄이 밀리지 않게 */
+.hud .stat, .rel .stat { position: relative; }
+.hud .stat .lab b .delta, .rel .stat .lab b .delta { position: absolute; top: 0; right: 0; margin: 0; font-size: .7rem; line-height: 1; }
+@media (max-width: 640px) { .hud .stat .lab b .delta, .rel .stat .lab b .delta { font-size: .6rem; } }
 </style>
 </head>
 <body>
