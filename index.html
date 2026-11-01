@@ -1,0 +1,932 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>사마</title>
+<meta name="description" content="사마(斯麻) — 무령왕과 무령왕릉을 소재로 한 미연시 선택지 게임">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=Gowun+Batang:wght@400;700&family=Noto+Serif+TC:wght@500;700&display=swap">
+<style>
+/* 레이아웃: 전체 화면 미연시. 색은 백제 금동대향로의 금동과 청동녹, 옻칠의 먹색과 주칠 */
+:root {
+  --bg: #121417;        /* 옻칠 먹색 */
+  --panel: #1c2024;
+  --line: #3a3f45;
+  --paper: #ece2cb;     /* 마지(麻紙) 글자색 */
+  --dim: #a9b5a6;
+  --amber: #c9a35a;     /* 금동 */
+  --green: #7fa792;     /* 청동녹 */
+  --cinnabar: #c4553c;  /* 주칠 */
+  --f-display: "Nanum Myeongjo", "AppleMyungjo", serif;
+  --f-body: "Gowun Batang", "AppleMyungjo", serif;
+  --f-han: "Noto Serif TC", "Songti TC", serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--paper); font-family: var(--f-body); font-size: 16px; line-height: 1.75;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 40px;
+  background-image: radial-gradient(ellipse at 50% -10%, #2a2a2e 0%, transparent 60%);
+}
+.wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 18px; }
+header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.logo { font-family: var(--f-display); font-weight: 800; font-size: 1.55rem; letter-spacing: .02em; margin: 0; }
+.logo span { font-family: var(--f-han); color: var(--amber); font-weight: 700; margin-right: .3em; }
+.tools { display: flex; gap: 8px; }
+button { font: inherit; cursor: pointer; }
+.ghost { background: none; border: 1px solid var(--line); color: var(--dim); border-radius: 4px; padding: 3px 10px; font-size: .82rem; }
+.ghost:hover { color: var(--paper); border-color: var(--dim); }
+button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+.hud { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.stat { display: grid; gap: 4px; }
+.stat .lab { display: flex; justify-content: space-between; font-size: .78rem; color: var(--dim); letter-spacing: .04em; }
+.stat .lab b { color: var(--paper); font-variant-numeric: tabular-nums; font-weight: 700; }
+.bar { height: 6px; background: var(--panel); border-radius: 3px; overflow: hidden; }
+.bar i { display: block; height: 100%; width: 50%; transition: width .5s ease; }
+.s-power i { background: var(--amber); } .s-nobles i { background: var(--green); } .s-people i { background: var(--cinnabar); } .s-diplo i { background: #8fb0d6; }
+.eyebrow.ev { color: var(--cinnabar); }
+.choice:disabled { opacity: .45; cursor: not-allowed; border-color: var(--line); background: transparent; }
+.delta { font-size: .72rem; margin-left: 4px; }
+.changes { display: flex; flex-wrap: wrap; gap: 6px 12px; border-top: 1px dashed var(--line); padding-top: 8px; }
+.changes .delta { margin: 0; font-size: .85rem; }
+.text.mono p { font-size: 1.04rem; line-height: 1.95; color: #f3ead6; }
+.text.mono p:last-child { color: var(--amber); font-family: var(--f-display); font-weight: 700; }
+.choice .cost { display: flex; flex-wrap: wrap; gap: 2px 10px; margin-top: 5px; }
+.choice .cost .delta { margin: 0; font-size: .76rem; }
+.choice.next .cost { justify-content: center; }
+.delta.fate { color: var(--amber); }
+.delta.up { color: var(--green); } .delta.down { color: var(--cinnabar); }
+
+.scene { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.scene .inner { padding: 22px 22px 18px; display: grid; gap: 12px; }
+.art { position: relative; aspect-ratio: 16 / 9; max-width: 100%; background: var(--bg); }
+.art img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 55%, var(--panel) 100%); }
+.eyebrow { display: flex; gap: 10px; flex-wrap: wrap; font-size: .8rem; color: var(--amber); letter-spacing: .08em; }
+.eyebrow .ref { color: var(--dim); letter-spacing: 0; }
+.scene h2 { font-family: var(--f-display); font-weight: 800; font-size: 1.3rem; margin: 0; text-wrap: balance; }
+.text p { margin: 0 0 .7em; }
+.text p:last-child { margin-bottom: 0; }
+.say { border-left: 2px solid var(--amber); padding-left: 12px; }
+.say .who { display: block; font-size: .8rem; color: var(--amber); font-weight: 700; }
+.note { font-size: .86rem; color: var(--dim); }
+details.src { border-top: 1px dashed var(--line); padding-top: 8px; }
+details.src summary { cursor: pointer; font-size: .82rem; color: var(--dim); }
+details.src .han { font-family: var(--f-han); font-size: 1.05rem; line-height: 1.9; margin: 6px 0 2px; color: var(--paper); }
+details.src .pg { font-size: .76rem; color: var(--dim); }
+
+.choices { display: grid; gap: 10px; }
+.choice { text-align: left; background: transparent; color: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; line-height: 1.55; transition: border-color .15s, background .15s; }
+.choice:hover { border-color: var(--amber); background: rgba(212,155,60,.06); }
+.choice small { display: block; color: var(--dim); font-size: .78rem; margin-top: 2px; }
+.choice.next { text-align: center; color: var(--amber); }
+
+.ending { border-color: var(--amber); }
+.ending .kind { font-size: .78rem; padding: 1px 8px; border-radius: 3px; border: 1px solid currentColor; width: fit-content; }
+.kind.hist { color: var(--amber); } .kind.if { color: var(--green); } .kind.dead { color: var(--cinnabar); }
+.fact { background: rgba(0,0,0,.18); border-radius: 4px; padding: 10px 12px; font-size: .9rem; }
+.fact b { color: var(--amber); }
+
+.book { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.book div { border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; font-size: .85rem; }
+.book .got { border-color: var(--amber); }
+.book .no { color: var(--dim); }
+footer { font-size: .76rem; color: var(--dim); text-align: center; }
+@media (max-width: 480px) {
+  .scene .inner { padding: 16px 16px 16px; }
+  .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; }
+  .stat .lab { font-size: .72rem; }
+  .book { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { .bar i { transition: none; } .scene { animation: none !important; } }
+.scene { animation: rise .35s ease both; }
+/* 인트로 화면 */
+.cover .art { aspect-ratio: 4 / 3; }
+.cover .art::after { background: linear-gradient(to bottom, rgba(15,32,29,.15) 30%, var(--panel) 100%); }
+.cover .mast { position: absolute; left: 0; right: 0; bottom: 14px; z-index: 1; text-align: center; padding: 0 16px; }
+.cover .mast .han { font-family: var(--f-han); font-weight: 700; color: var(--amber); font-size: clamp(2.6rem, 11vw, 4.2rem); letter-spacing: .18em; line-height: 1.1; text-shadow: 0 2px 18px rgba(0,0,0,.6); }
+.cover .mast .ko { font-family: var(--f-display); font-weight: 800; font-size: 1.15rem; letter-spacing: .3em; text-shadow: 0 1px 10px rgba(0,0,0,.7); }
+.cover .lede { font-size: 1.02rem; }
+.cast { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.cast div { border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; font-size: .86rem; line-height: 1.5; }
+.cast b { display: block; font-family: var(--f-display); color: var(--amber); }
+.how { margin: 0; padding-left: 1.1em; font-size: .9rem; color: var(--dim); }
+.how li { margin-bottom: .3em; } .how b { color: var(--paper); }
+.cover h3 { font-family: var(--f-display); font-size: .95rem; margin: 4px 0 0; color: var(--amber); letter-spacing: .1em; }
+.choice.start { text-align: center; font-family: var(--f-display); font-weight: 800; font-size: 1.1rem; color: var(--bg); background: var(--amber); border-color: var(--amber); }
+.choice.start:hover { background: #e2ad52; }
+@media (max-width: 480px) { .cast { grid-template-columns: 1fr; } }
+@keyframes rise { from { transform: translateY(6px); opacity: .4; } to { transform: none; opacity: 1; } }
+
+/* ---------- 미연시 화면 ---------- */
+.vn { position: relative; height: clamp(520px, 76vh, 660px); border-radius: 6px; overflow: hidden; border: 1px solid var(--line); background: #07080a; cursor: pointer; user-select: none; -webkit-user-select: none; animation: rise .35s ease both; }
+.vn .bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: brightness(.72) saturate(.9); }
+.vn::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to bottom, rgba(0,0,0,.45) 0%, transparent 18%, transparent 55%, rgba(0,0,0,.55) 100%); }
+.sprites { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.sprite { position: absolute; bottom: 0; left: 50%; height: 90%; aspect-ratio: 1 / 1; transform: translateX(-50%); filter: drop-shadow(0 6px 22px rgba(0,0,0,.65)); animation: appear .45s ease both; }
+.sprite.l { left: 30%; } .sprite.r { left: 70%; }
+@keyframes appear { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%); } }
+.place { position: absolute; z-index: 3; top: 10px; left: 12px; right: 12px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: .78rem; color: var(--amber); letter-spacing: .06em; text-shadow: 0 1px 6px #000; }
+.place b { font-family: var(--f-display); font-size: .95rem; color: var(--paper); letter-spacing: .02em; }
+.vn.ev .place span { color: var(--cinnabar); }
+.srcbtn { margin-left: auto; background: rgba(14,16,19,.7); color: var(--paper); cursor: pointer; }
+.srcpop { position: absolute; z-index: 4; top: 40px; left: 12px; right: 12px; background: rgba(14,16,19,.94); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; cursor: default; }
+.srcpop .han { font-family: var(--f-han); font-size: 1.05rem; line-height: 1.9; }
+.srcpop .pg { font-size: .76rem; color: var(--dim); }
+.box { position: absolute; z-index: 2; left: 12px; right: 12px; bottom: 12px; min-height: 22%; max-height: 62%; overflow-y: auto; background: rgba(14,16,19,.88); border: 1px solid rgba(212,155,60,.45); border-radius: 6px; padding: 16px 18px 26px; box-shadow: 0 -6px 30px rgba(0,0,0,.4); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+.name { display: inline-block; margin: -8px 0 8px; background: var(--amber); color: #1a1206; font-family: var(--f-display); font-weight: 800; font-size: .88rem; padding: 1px 12px; border-radius: 3px; }
+.name[hidden] { display: none; }
+.line { font-size: 1.02rem; line-height: 1.85; white-space: pre-wrap; }
+.line.note { color: var(--dim); font-size: .9rem; }
+.line.mono { font-style: normal; color: #f3ead6; }
+.line .changes { margin-top: 10px; white-space: normal; }
+.more { position: absolute; right: 14px; bottom: 6px; color: var(--amber); font-size: .7rem; animation: blink 1.1s steps(2) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.menu { position: absolute; z-index: 5; inset: 0; background: linear-gradient(to bottom, rgba(8,9,11,.25), rgba(8,9,11,.78) 45%); display: flex; overflow-y: auto; padding: 44px 16px 16px; cursor: default; -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+.menu[hidden], .srcpop[hidden], .more[hidden] { display: none; }
+.menu-in { margin: auto 0; width: 100%; display: grid; gap: 10px; }
+.menu .choice { background: rgba(28,32,36,.94); }
+.menu .choice:hover { background: rgba(48,52,58,.96); }
+.menu .choice:disabled { background: rgba(28,32,36,.6); }
+.endcard { background: rgba(28,32,36,.95); border: 1px solid var(--amber); border-radius: 6px; padding: 18px; display: grid; gap: 10px; }
+.endcard h2 { font-family: var(--f-display); font-weight: 800; font-size: 1.3rem; margin: 0; }
+@media (max-width: 480px) {
+  .vn { height: clamp(520px, 78vh, 640px); }
+  .sprite { height: 78%; } .sprite.l { left: 26%; } .sprite.r { left: 74%; }
+  .box { left: 8px; right: 8px; bottom: 8px; padding: 14px 14px 24px; }
+  .line { font-size: .96rem; }
+}
+@media (prefers-reduced-motion: reduce) { .sprite, .vn { animation: none; } .more { animation: none; } }
+
+/* ---------- 전체 화면 (게임 진행 중) ---------- */
+body.playing { padding: 0; overflow: hidden; background: #07080a; }
+body.playing .wrap { max-width: none; display: block; }
+body.playing footer, body.playing .logo { display: none; }
+body.playing .vn { position: fixed; inset: 0; height: 100vh; height: 100dvh; border: 0; border-radius: 0; animation: none; }
+body.playing header { position: fixed; z-index: 10; top: 12px; right: 14px; }
+body.playing .hud { position: fixed; z-index: 10; top: 12px; left: 14px; width: min(560px, 58vw); padding: 8px 14px; background: rgba(14,16,19,.72); border: 1px solid rgba(212,155,60,.25); border-radius: 6px; -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+body.playing .ghost { background: rgba(14,16,19,.72); }
+body.playing .place { top: 74px; left: 18px; right: 18px; font-size: .85rem; }
+body.playing .place b { font-size: 1.1rem; }
+body.playing .srcpop { top: 104px; max-width: 760px; }
+body.playing .sprite { height: 86%; }
+body.playing .box { left: 50%; right: auto; width: min(1080px, calc(100% - 32px)); transform: translateX(-50%); bottom: 20px; min-height: 0; height: 26%; max-height: none; padding: 18px 26px 28px; }
+body.playing .line { font-size: 1.12rem; }
+body.playing .menu { padding-top: 96px; }
+body.playing .menu-in { max-width: 760px; margin: auto; }
+@media (max-width: 640px) {
+  body.playing header { top: 8px; right: 8px; }
+  body.playing .hud { top: 46px; left: 8px; right: 8px; width: auto; padding: 6px 10px; }
+  body.playing .place { top: 132px; left: 12px; right: 12px; }
+  body.playing .srcpop { top: 160px; }
+  body.playing .sprite { height: 70%; bottom: 16%; }
+  body.playing .box { width: calc(100% - 16px); bottom: 8px; height: 34%; padding: 14px 16px 24px; }
+  body.playing .line { font-size: 1rem; }
+  body.playing .menu { padding-top: 150px; }
+}
+
+/* ---------- 사마 전용 ---------- */
+.vn .bg { position: absolute; inset: 0; }
+.vn .bg svg, .vn .bg img, .art svg { display: block; width: 100%; height: 100%; object-fit: cover; }
+.vn .bg { filter: brightness(.9); }
+.relics { display: flex; flex-wrap: wrap; gap: 6px; }
+.relics span { font-size: .78rem; padding: 2px 8px; border-radius: 3px; border: 1px dashed var(--line); color: var(--dim); }
+.relics span.on { border-style: solid; border-color: var(--amber); color: var(--amber); }
+.scene h3 { font-family: var(--f-display); font-size: .95rem; margin: 6px 0 0; color: var(--amber); letter-spacing: .1em; }
+.book .no .note, .book .got .note { font-size: .78rem; }
+
+/* 우호도: 오른쪽 패널 */
+.hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.rel { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.s-yang i { background: #d98a5b; } .s-wa i { background: #8fb0d6; }
+body.playing .hud { width: min(460px, 52vw); }
+body.playing .rel { position: fixed; z-index: 10; top: 58px; right: 14px; width: 190px; grid-template-columns: 1fr; gap: 8px; padding: 10px 14px; background: rgba(14,16,19,.72); border: 1px solid rgba(201,163,90,.25); border-radius: 6px; -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+body.playing .place { right: 220px; }
+.delta.fail { border: 1px solid currentColor; border-radius: 3px; padding: 0 6px; }
+@media (max-width: 640px) {
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  body.playing .hud { width: auto; }
+  body.playing .rel { top: 102px; left: 8px; right: 8px; width: auto; grid-template-columns: 1fr 1fr; padding: 6px 10px; }
+  body.playing .place { top: 160px; right: 12px; }
+  body.playing .srcpop { top: 188px; }
+  body.playing .menu { padding-top: 180px; }
+}
+
+/* 불심 줄, 사료 버튼과 우호 패널이 겹치지 않게 */
+.stat[hidden] { display: none; }
+.s-buddha .bar { display: none; } .s-buddha b { color: #e3b3b8; letter-spacing: .12em; font-size: .9rem; }
+body.playing .place { right: 236px; }
+body.playing .srcpop { right: 236px; }
+@media (max-width: 640px) {
+  body.playing .rel { grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); }
+  body.playing .place, body.playing .srcpop { right: 12px; }
+}
+
+/* 수치 다섯 개 */
+.hud { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.s-army i { background: #9c8f7a; } .s-gold i { background: #e0c27a; }
+body.playing .hud { width: min(620px, 60vw); }
+@media (max-width: 640px) {
+  .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  body.playing .hud { width: auto; }
+  body.playing .rel { top: 132px; }
+  body.playing .place { top: 192px; }
+  body.playing .srcpop { top: 220px; }
+  body.playing .menu { padding-top: 210px; }
+  body.playing .sprite { bottom: 16%; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 class="logo"><span>斯麻</span>사마</h1>
+    <div class="tools">
+      <button class="ghost" id="btn-book" type="button">도감</button>
+      <button class="ghost" id="btn-restart" type="button">처음부터</button>
+    </div>
+  </header>
+  <section class="hud" aria-label="수치">
+    <div class="stat s-power"><div class="lab">왕권 <b id="v-power"></b></div><div class="bar"><i id="b-power"></i></div></div>
+    <div class="stat s-army"><div class="lab">군사력 <b id="v-army"></b></div><div class="bar"><i id="b-army"></i></div></div>
+    <div class="stat s-gold"><div class="lab">재정 <b id="v-gold"></b></div><div class="bar"><i id="b-gold"></i></div></div>
+    <div class="stat s-nobles"><div class="lab">귀족 협력 <b id="v-nobles"></b></div><div class="bar"><i id="b-nobles"></i></div></div>
+    <div class="stat s-people"><div class="lab">민심 <b id="v-people"></b></div><div class="bar"><i id="b-people"></i></div></div>
+  </section>
+  <section class="rel" aria-label="우호">
+    <div class="stat s-yang"><div class="lab">양나라 우호 <b id="v-yang"></b></div><div class="bar"><i id="b-yang"></i></div></div>
+    <div class="stat s-wa"><div class="lab">왜 우호 <b id="v-wa"></b></div><div class="bar"><i id="b-wa"></i></div></div>
+    <div class="stat s-buddha" id="buddha-row" hidden><div class="lab">불심 <b id="v-buddha"></b></div><div class="bar"><i id="b-buddha"></i></div></div>
+  </section>
+  <main id="stage"></main>
+  <footer>사마(斯麻) — 『삼국사기』 백제본기, 『일본서기』, 무령왕 지석을 바탕으로 만든 선택지 게임. 사료 원문은 수업 자료와 대조해야 하며 쪽수는 미확인입니다. 화면을 누르거나 Space·Enter로 대사를 넘깁니다.</footer>
+</div>
+<script>
+const START = { power: 40, army: 40, gold: 40, nobles: 50, people: 50, yang: 20, wa: 30 };
+const STATS = ["power", "army", "gold", "nobles", "people"];
+const RELS = ["yang", "wa"];   // 오른쪽 우호도 패널
+const ALL = [...STATS, ...RELS];
+const NAME = { power: "왕권", army: "군사력", gold: "재정", nobles: "귀족 협력", people: "민심", yang: "양나라 우호", wa: "왜 우호", buddha: "불심" };
+let S, cur, pending = null;
+
+function reset() {
+  S = Object.assign({}, START, { buddha: 0, liang: false, wae: false, rites: false, strategy: "", ascend: "", brick: false, coffin: false, stone: "", evs: 0, seen: [] });
+  pending = null;
+}
+const clamp = v => Math.max(0, Math.min(100, v));
+
+/* ---------- 장면 ----------
+   text: 문단 배열. {who, line} 은 대사, {note} 는 해설.
+   src: [표시 이름, 원문, 출전]  — 원문은 수업 사료와 대조할 것. 쪽수 미확인.
+   choices: label, sub, need(필요 수치), lock(고를 수 없는 조건 함수)·lockText, eff, set, res, go */
+const N = {
+  mono: {
+    mono: true, date: "523년 5월", place: "웅진 · 왕궁, 마지막 봄", title: "섬에서 태어난 왕",
+    text: [
+      "예순두 해. 숨이 가빠진다. 나는 섬에서 태어났다. 왜로 가는 배 위에서 어머니가 산기를 느꼈고, 배는 축자의 각라도에 닿았다. 그래서 내 이름은 사마, 섬이다.",
+      "백제의 기록은 나를 동성왕의 아들이라 하고, 왜의 기록은 곤지의 아들, 동성의 배다른 형이라 한다. 어느 쪽이든 나는 왕이 되었고, 그사이에 많은 사람이 죽었다.",
+      "내가 죽으면 아들 명농이 나를 묻을 것이다. 무덤에 무엇이 남을지는 내가 어떻게 살았는가에 달렸다. 한성이 불타던 그해부터 떠올려 보자."
+    ],
+    src: ["일본서기 웅략기 5년", "於筑紫各羅嶋產兒 仍名此兒曰嶋君 於是軍君卽以一船送嶋君於國 是爲武寧王", "『일본서기』 권14 웅략천황 5년 · 쪽수 미확인"],
+    choices: [{ label: "475년, 한성으로", next: true, go: "hanseong" }]
+  },
+  hanseong: {
+    date: "475년 9월", place: "한성", title: "불타는 한성",
+    text: [
+      "고구려 간첩 승려 도림의 말에 넘어간 개로왕이 무리하게 성과 궁을 쌓는 사이, 창고는 비고 백성은 지쳤다. 그 틈에 장수왕의 군사 3만이 내려왔다.",
+      { who: "개로왕", line: "내가 어리석어 간사한 사람의 말을 믿다가 이 꼴이 되었다. 나는 사직을 위해 죽겠다. 너는 피하여 나라의 대를 이어라." },
+      "왕자 문주가 신라에 원군을 청하러 남쪽으로 떠난다. 열다섯 살의 사마도 길을 골라야 한다."
+    ],
+    src: ["삼국사기 개로왕 21년", "予愚而不明 信用姦人之言 以至於此 … 吾當死於社稷 汝在此俱死 無益也 盍避難以續國系焉", "『삼국사기』 권25 백제본기 개로왕 21년 · 쪽수 미확인"],
+    choices: [
+      { label: "문주를 따라 신라로 원군을 청하러 간다", sub: "사료 속 문주의 길", eff: { nobles: 5, people: -5, gold: -5 },
+        res: ["신라는 군사 1만을 내주었다. 그러나 돌아왔을 때 한성은 이미 떨어졌고, 왕은 죽임을 당한 뒤였다."], go: "haegu" },
+      { label: "남아서 성을 지킨다", eff: { people: 10, army: -10, nobles: -5 },
+        res: ["성이 무너지던 밤, 늙은 군사 하나가 당신을 수로로 밀어냈다. '왕족이 살아야 나라가 산다.'"], go: "haegu" },
+      { label: "바다 건너 왜의 곤지에게로 피한다", eff: { wa: 10 }, go: "end_isle" }
+    ]
+  },
+  haegu: {
+    date: "475~478년", place: "웅진 · 대두성", title: "쫓겨 온 도읍",
+    text: [
+      "문주는 웅진으로 떠밀려 내려와 대성8족에게 자리를 나누었다. 왕과 귀족이 함께 다스리는 연립정부였고, 군권은 해구가 쥐었다.",
+      "477년 문주왕은 해구가 보낸 도적에게 죽었다. 열세 살 삼근왕이 섰지만, 이듬해 해구는 대두성에서 반란을 일으켰다. 진씨 가문의 진로가 토벌에 나선다."
+    ],
+    choices: [
+      { label: "진로의 군에 들어가 해구를 친다", fail: ["당신이 맡은 부대는 대두성 아래에서 무너졌다. 반란은 진로의 손으로 끝났고, 공은 모두 진씨의 것이 되었다."], eff: { army: 10, power: 5, nobles: -5 },
+        res: ["해구는 죽었다. 진씨는 백제에서 가장 큰 가문이 되었고, 진로는 당신의 이름을 기억했다."], go: "dongseong" },
+      { label: "해구 편에 선다", eff: { nobles: 10 }, go: "end_haegu" },
+      { label: "금강가 초막 절에 머물며 지켜본다", eff: { people: 5, nobles: 5, power: -5 }, set: { buddha: 1 },
+        res: ["한성에서 내려온 늙은 승려가 말했다. '도림 같은 자 때문에 부처를 원망하지 마시오. 칼을 쥔 손이 죄지, 경전이 무슨 죄겠소.'"], go: "dongseong" }
+    ]
+  },
+  dongseong: {
+    date: "479~500년", place: "웅진", title: "배다른 아우의 나라",
+    text: [
+      "479년, 곤지의 아들 말다가 왜에서 돌아와 왕이 되었다. 동성왕이다. 그는 해씨 대신 백씨 같은 새 귀족을 키워 백가를 위사좌평에 앉히고, 신라와 혼인동맹을 맺었다.",
+      "당신은 왕보다 나이 많은 왕족, 『일본서기』의 말대로라면 배다른 형이다. 스무 해를 어떻게 보낼 것인가."
+    ],
+    choices: [
+      { label: "왕의 곁에서 충실한 신하로 산다", eff: { nobles: 5, power: 5, people: -5 },
+        res: ["왕은 형을 믿는 척했고, 형은 믿음받는 척했다."], go: "murder" },
+      { label: "지방의 담로로 내려가 백성을 돌본다", eff: { people: 15, gold: 10, power: -5 },
+        res: ["당신의 이름이 웅진 바깥에서 먼저 알려지기 시작했다."], go: "murder" },
+      { label: "남조로 가는 사신 길에 따라나선다", fail: ["사신단은 산동 앞바다에서 북위의 배에 막혀 되돌아왔다. 남조 땅은 밟아 보지도 못했다."], eff: { yang: 20, gold: -10 },
+        res: ["건강에서 당신은 벽돌로 쌓은 무덤과 부처를 모시는 큰 절을 보았다."], go: "murder" },
+      { label: "절을 짓는 승려들을 몰래 돕는다", eff: { people: 5, gold: -5, nobles: -5 }, set: { buddha: () => S.buddha + 1 },
+        res: ["해씨도 진씨도 백씨도 아닌 부처 앞에서는, 누구나 같은 높이로 절했다."], go: "murder" }
+    ]
+  },
+  murder: {
+    date: "501년 겨울", place: "웅진", title: "눈 속의 칼",
+    text: [
+      "가림성으로 밀려난 위사좌평 백가가 자객을 보냈다. 눈 내린 사냥길에서 동성왕이 쓰러졌다. 사람들의 눈이 당신에게 쏠린다.",
+      { note: "『삼국사기』는 사마가 동성왕의 둘째 아들로 왕위를 이었다 하고, 『일본서기』 무열기는 '말다왕이 무도하여 나라 사람들이 제거하고 무령왕을 세웠다'고 적는다." }
+    ],
+    sure: true,
+    src: ["일본서기 무열기 4년", "百濟末多王無道 暴虐百姓 國人遂除 而立嶋王 是爲武寧王", "『일본서기』 권16 무열천황 4년 · 쪽수 미확인"],
+    choices: [
+      { label: "선왕의 원수를 갚겠다며 왕위에 오른다", sub: "『삼국사기』의 흐름", eff: { power: 10, army: 5 }, set: { ascend: "revenge" },
+        res: ["당신은 상복을 입고 즉위했다. 첫 명령은 가림성으로 군사를 보낼 준비였다."], go: "baekga" },
+      { label: "폭정을 끝내라는 나라 사람들의 추대를 받는다", sub: "『일본서기』의 흐름", eff: { nobles: 10, power: -5 }, set: { ascend: "elected" },
+        res: ["귀족들이 당신 앞에 무릎을 꿇었다. 당신을 세운 것이 그들이라는 사실을, 모두 잊지 않을 것이다."], go: "baekga" },
+      { label: "왕위를 사양하고 어린 왕자를 세운다", eff: { nobles: 15, power: -20 }, go: "end_shadow" }
+    ]
+  },
+  baekga: {
+    date: "즉위 직후 정월", place: "가림성 · 우두성", title: "가림성의 백가",
+    text: [
+      "좌평 백가가 가림성에 웅거해 반란을 일으켰다. 왕을 죽인 자가 이제 새 왕에게 칼을 겨눈다.",
+      "귀족들이 숨을 죽이고 지켜본다. 새 왕이 어떤 사람인지, 이 일 하나로 결정될 것이다."
+    ],
+    src: ["삼국사기 무령왕 원년", "春正月 佐平苩加據加林城叛 王帥兵馬至牛頭城 命扞率解明討之 苩加出降 王斬之 投於白江", "『삼국사기』 권26 백제본기 무령왕 원년 · 쪽수 미확인"],
+    choices: [
+      { label: "몸소 우두성까지 나아가 해명에게 토벌을 명한다", need: { army: 30 }, fail: ["백가는 쉽게 항복하지 않았다. 가림성 포위는 해를 넘겼고, 그사이 귀족들은 새 왕의 칼끝이 얼마나 무딘지 지켜보았다."], sub: "사료 속 무령왕", eff: { power: 15, army: -5, gold: 10, nobles: -5 },
+        res: ["백가는 성문을 열고 나와 항복했다. 당신은 그의 목을 베어 백강에 던졌다.", "그날 이후 누구도 새 왕을 '섬에서 온 왕족'이라 부르지 않았다."], go: "goguryeo" },
+      { label: "항복을 받고 목숨은 살려 준다", eff: { nobles: 10, power: -10, people: 5 },
+        res: ["백씨 사람들은 고개를 숙였다. 그러나 다른 귀족들은 반역해도 살 수 있다는 것을 배웠다."], go: "goguryeo" },
+      { label: "가림성을 내주고 협상한다", eff: { power: -20, nobles: 5 },
+        go: () => S.power < 20 ? "end_baekga" : "goguryeo",
+        res: () => S.power < 20 ? null : ["백가는 가림성의 주인이 되었다. 왕이 반역자와 땅을 나눴다는 소문이 웅진에 퍼졌다."] }
+    ]
+  },
+  goguryeo: {
+    date: "501~512년", place: "위천 북쪽", title: "기병 3천",
+    text: [
+      "즉위한 해 겨울부터 당신은 고구려를 먼저 쳤다. 달솔 우영에게 군사 5천을 주어 수곡성을 습격하게 했다. 한성이 불타던 날 이후 처음으로 백제가 북쪽을 향해 칼을 든 것이다.",
+      "512년 가을, 고구려가 가불성을 빼앗고 원산성을 깨뜨렸다. 약탈이 심하다는 소식이 웅진에 이른다.",
+      "당신 손에 남은 날랜 기병은 3천."
+    ],
+    choices: [
+      { label: "기병 3천을 직접 이끌고 위천 북쪽으로 달려간다", need: { army: 35 }, fail: ["기습은 들켰다. 고구려군은 진을 치고 기다리고 있었다. 당신은 간신히 기병을 물려 돌아왔다."], sub: "사료 속 무령왕", eff: { power: 10, army: -10, gold: 10, people: 10, nobles: -5 },
+        go: () => S.army + S.power < 75 ? "end_goguryeo" : "famine",
+        res: () => S.army + S.power < 75 ? null : ["고구려군은 백제군이 적은 것을 보고 얕보아 진도 치지 않았다. 당신은 그 틈을 찔렀다. 위천의 물이 붉게 물들었다.", "서른일곱 해 전 한성에서 진 빚을, 처음으로 갚은 날이었다."] },
+      { label: "성을 굳게 지키고 신라에 원군을 청한다", eff: { nobles: 5, gold: -10, people: -5 },
+        res: ["신라군이 오기 전에 고구려군은 물러갔다. 지켜 냈지만, 백성들은 '이번에도 기다리기만 했다'고 수군거렸다."], go: "famine" },
+      { label: "장수에게 맡기고 웅진을 지킨다", eff: { nobles: 5, power: -10 },
+        res: ["장수들은 잘 싸웠고, 공은 장수들의 가문에 돌아갔다."], go: "famine" }
+    ]
+  },
+  famine: {
+    date: "506년 · 510년", place: "웅진 들판", title: "마른 냇물",
+    text: [
+      "506년 봄, 큰 역병이 돌았다. 3월부터 5월까지 비가 오지 않아 냇물과 못이 말랐고, 백성은 굶주렸다.",
+      "굶주린 사람들이 고을을 떠나 떠돌기 시작했다. 떠도는 사람이 늘면 논밭은 비고, 빈 논밭은 다음 해의 굶주림이 된다."
+    ],
+    src: ["삼국사기 무령왕 6년 · 10년", "春大疫 三月至五月不雨 川澤竭 民饑 發倉賑救 ／ 下令完固隄防 驅內外遊食者歸農", "『삼국사기』 권26 백제본기 무령왕 6년·10년 · 쪽수 미확인"],
+    choices: [
+      { label: "나라 창고를 열어 굶주린 백성을 구한다", need: { gold: 20 }, fail: ["곡식은 백성에게 닿기 전에 관리들의 손에서 새어 나갔다. 창고는 비었는데 굶주림은 그대로였다."], sub: "사료 속 무령왕(506)", eff: { people: 15, gold: -20, nobles: -5 },
+        res: ["창고 문이 열리던 날, 웅진 성문 앞에 끝없는 줄이 섰다. 한 노파가 곡식 자루를 받아 들고 왕궁 쪽을 향해 오래 절했다."], go: "temple" },
+      { label: "제방을 고치고, 떠도는 사람들을 농토로 돌려보낸다", need: { gold: 15 }, fail: ["둑을 쌓자마자 장마가 왔다. 새 둑은 무너지고, 돌아왔던 사람들은 다시 길을 떠났다."], sub: "사료 속 무령왕(510)", eff: { people: 10, power: 5, gold: -15 },
+        res: ["둑이 다시 서고 물길이 논으로 돌아왔다. 떠돌던 사람들이 괭이를 잡았다. 굶주림을 그해만 막은 것이 아니라 다음 해까지 막은 셈이다."], go: "temple" },
+      { label: "귀족들의 곳간을 열게 한다", need: { power: 50 }, eff: { people: 15, gold: 10, nobles: -15 },
+        res: ["귀족들은 이를 갈며 곳간을 열었다. 백성은 왕을 칭송했고, 큰 가문들은 왕의 이름을 따로 적어 두었다."], go: "temple" },
+      { label: "버틴다. 나라 창고는 전쟁에 써야 한다", eff: { people: -20, army: 5 },
+        res: ["그해 여름, 웅진 길가에 굶어 죽은 사람이 쌓였다. 군량은 지켰지만, 그 군량을 먹일 사람들이 줄어들었다."], go: "temple" }
+    ]
+  },
+  temple: {
+    date: "510년대", place: "웅진 · 금강가 절", title: "누구의 조상도 아닌 신",
+    text: [
+      "금강가 언덕의 절에 사람이 늘었다. 남조에서 들어온 경전을 읽는 젊은 승려들이 있고, 집에 작은 불상을 모시는 귀족도 생겼다.",
+      "해씨는 해씨의 조상을, 진씨는 진씨의 조상을 섬기는 나라였다. 그런데 부처는 누구의 조상도 아니었다. 그래서 모두가 그 앞에 함께 절할 수 있었다.",
+      "한편 왕실에는 오래된 제사가 있다. 하늘과 땅의 신, 산과 강의 신, 죽은 이의 땅을 지키는 신들.",
+      { note: "웅진 시기 불교가 자라나는 모습을 그린 게임용 장면이다. 백제는 침류왕 때(384) 불교를 받아들였고, 아들 성왕은 527년 웅진에 대통사를 세웠다. 무령왕릉에는 연꽃무늬 벽돌과 함께 땅의 신에게 묘지를 산 매지권, 무덤을 지키는 진묘수가 함께 있다." }
+    ],
+    choices: [
+      { label: "왕실이 절을 후원하고, 남조에 경전과 승려를 청한다", need: { gold: 15 }, fail: ["경전을 실은 배가 서해에서 가라앉았다. 귀족들은 '부처도 바다는 못 건넌다'며 비웃었다."], eff: { nobles: 5, yang: 15, gold: -15 }, set: { buddha: () => S.buddha + 2 },
+        res: ["경전 수레가 금강을 건너왔다. 큰 가문들이 다투어 절에 시주했다. 서로를 믿지 않던 사람들이 같은 법회에 앉았다."], go: "wae" },
+      { label: "조상신과 땅의 신을 모시는 옛 제사를 지킨다", eff: { people: 5, nobles: -5 }, set: { rites: true },
+        res: ["당신은 해마다 하늘과 땅에 제사를 올렸다. 오래된 신들은 말이 없었지만, 백성들은 익숙한 제사에 안심했다."], go: "wae" },
+      { label: "부처도, 옛 신도 함께 품는다", eff: { people: 5, gold: -5, power: -5 }, set: { buddha: () => S.buddha + 1, rites: true },
+        res: ["절의 종소리와 제사의 북소리가 같은 도성에서 울렸다. 어느 한쪽을 고르지 않은 왕을, 양쪽 모두 조금씩 아쉬워했다."], go: "wae" }
+    ]
+  },
+  wae: {
+    date: "512~513년", place: "웅진 · 나루", title: "바다 건너의 고향",
+    text: [
+      "가야의 반파국이 기문 땅을 빼앗았다. 당신은 왜에 사신을 보내 이 일을 의논하려 한다.",
+      "왜는 당신이 태어난 바다 건너의 나라다. 배 한 척에 실려 백제로 왔던 아이가, 이제 배를 보내는 왕이 되었다.",
+      "이번 사신단에는 귀한 것을 함께 보내야 한다."
+    ],
+    src: ["일본서기 계체기 7년", "百濟遣姐彌文貴將軍 州利卽爾將軍 副穗積臣押山 貢五經博士段楊爾", "『일본서기』 권17 계체천황 7년 · 쪽수 미확인"],
+    choices: [
+      { label: "오경박사 단양이를 보낸다", fail: ["사신선이 풍랑을 만나 대마도 근처에서 돌아왔다. 학자는 살았지만, 왜는 백제가 약속을 어겼다고 여겼다."], sub: "사료 속 무령왕", eff: { wa: 30, gold: -10, nobles: -5 }, set: { wae: true },
+        res: ["유교 경전을 가르칠 학자가 바다를 건넜다. 왜는 기문 땅을 두고 백제의 손을 들어 주었다.", "책과 사람을 보내고 땅과 신뢰를 얻었다. 칼보다 오래가는 거래였다."], go: "liang" },
+      { label: "군사를 보내 달라고 청한다", eff: { wa: 15, army: 15, gold: -15, people: -5 }, set: { wae: true },
+        res: ["왜는 배 몇 척을 보냈지만, 그 값으로 백제의 쌀과 쇠를 많이 가져갔다."], go: "liang" },
+      { label: "왜에 기대지 않는다", eff: { wa: -15, power: 5 },
+        res: ["사신은 떠나지 않았다. 기문 땅은 가야의 손에 남았다."], go: "liang" }
+    ]
+  },
+  liang: {
+    date: "521년 11월", place: "웅진 → 양나라 건강", title: "다시 강한 나라",
+    text: [
+      "고구려와 싸운 지 스무 해. 당신은 남조 양나라에 사신을 보낸다.",
+      "양의 황제 무제는 부처를 깊이 믿는 사람이다. 표문에 무엇이라 쓰느냐에 따라 양이 백제를 대하는 자리가 달라진다."
+    ],
+    src: ["삼국사기 무령왕 21년", "累破句驪 今始與通好 而更爲强國", "『삼국사기』 권26 백제본기 무령왕 21년 · 쪽수 미확인"],
+    choices: [
+      { label: "'여러 번 고구려를 깨뜨렸고, 이제 다시 강한 나라가 되었다'고 쓴다", fail: ["사신선이 바다에서 길을 잃었다. 표문은 건강에 닿지 못했고, 책봉은 다음으로 미뤄졌다."], sub: "사료 속 표문 · 양나라 우호와 왕권이 받쳐 줘야 한다",
+        eff: () => S.liang ? { yang: 30, power: 5 } : { yang: -10 },
+        res: () => (S.liang = S.yang + S.power >= 100)
+          ? ["양 무제는 백제의 표문을 읽고 사마를 '사지절 도독백제제군사 영동대장군'으로 봉했다.", "동쪽을 편안하게 하는 큰 장군. 섬에서 태어난 아이의 이름이, 바다 건너 황제의 조서에 올랐다."]
+          : ["양의 조정은 표문을 비웃었다. '고구려를 깨뜨렸다면서 사신은 이리 초라한가.' 책봉은 미뤄졌다."], go: "funeral" },
+      { label: "불법을 숭상하는 나라임을 앞세운다", eff: { yang: 30, nobles: 5, gold: -10 }, set: { liang: true },
+        res: ["부처를 믿는 황제는 부처를 섬기는 나라의 사신을 반겼다. 양 무제는 사마를 영동대장군으로 봉하고, 경전과 장인을 보내 주었다."], go: "funeral" },
+      { label: "북위와 손잡는다", eff: { yang: -30, army: 5 },
+        res: ["북위는 고구려와 가까웠다. 사신은 빈손으로 돌아왔고, 남조로 가는 바닷길은 한동안 끊겼다."], go: "funeral" }
+    ]
+  },
+  funeral: {
+    sure: true,
+    date: "523년 5월 7일 → 525년 8월 12일", place: "웅진 · 송산", title: "아들이 지은 무덤",
+    text: () => [
+      "사마는 예순두 살로 세상을 떠났다. 아들 명농, 성왕은 2년 넘게 빈전에 모신 뒤에야 아버지를 대묘에 안장했다.",
+      (S.yang >= 60
+        ? "양나라에서 온 장인들이 구운 벽돌로 아치를 쌓았다." + (S.buddha >= 2 ? " 벽마다 연꽃이 피었다." : "")
+        : "양나라 장인은 오지 않았다. 옛 왕족들처럼 깬돌로 무덤방을 쌓았다.")
+        + (S.wa >= 60 ? " 관은 바다를 건너온 금송으로 짰다." : " 관은 백제 땅의 나무로 짰다."),
+      { who: "명농", line: "이제 돌판에 새길 말만 남았다. 아버지의 죽음을 무엇이라 적을 것인가." }
+    ],
+    choices: [
+      { label: "지석에 이름과 생애를 새기고, 뒷면에 땅을 산 문서를 새긴다",
+        sub: () => S.power >= 80 ? "왕권이 강하다 · 죽음을 천자의 글자 '붕(崩)'으로 적는다" : "왕권이 약하다 · 죽음을 제후의 글자 '훙(薨)'으로 적는다",
+        set: { stone: () => S.power >= 80 ? "beng" : "hong" },
+        res: () => S.power >= 80
+          ? ["寧東大將軍 百濟斯麻王 年六十二歲 … 崩. 중국의 관작을 받았어도, 백제의 왕은 천자의 글자로 죽음을 적었다."]
+          : ["寧東大將軍 百濟斯麻王 年六十二歲 … 薨. 명농은 '붕'을 쓰려다 붓을 멈췄다. 아버지의 왕권은 그 글자를 감당하지 못했다."], go: "epilogue" },
+      { label: "아무것도 새기지 않는다. 무자비(無字碑)로 평가는 역사에 맡긴다", set: { stone: "" },
+        res: ["돌판은 글자 없이 놓였다. 무덤 문이 닫혔다."], go: "epilogue" }
+    ]
+  },
+  epilogue: {
+    date: "1971년 7월 7일", place: "공주 송산리", title: "무덤이 열리다",
+    text: () => [
+      "장맛비 속 배수로 공사의 삽 끝에 벽돌이 걸렸다. 천사백 년 넘게 닫혀 있던 문이 열렸다.",
+      "무덤에서 나온 것: " + (relics().map(k => RELIC[k].name).join(", ") || "이름 모를 몇 점의 유물") + "."
+    ],
+    choices: [{ label: "…", next: true, go: () => tombEnding() }]
+  },
+
+  /* ---------- 결말 ---------- */
+  end_tomb: { end: true, kind: "hist", tag: "역사 엔딩", title: "이름이 남은 무덤",
+    text: [
+      "寧東大將軍 百濟斯麻王. 지석이 이름을 말했다. 1971년, 백제 왕릉 가운데 처음으로 주인이 밝혀졌다.",
+      "섬에서 태어나 배 한 척에 실려 백제로 온 아이. 불타는 한성을 피해 웅진으로 떠밀려 온 왕족. 형과 아우의 피 위에서 왕이 되어, 고구려를 깨뜨리고 굶주린 백성을 먹이고 바다 건너 두 나라와 손을 잡았다.",
+      "그는 영원히 살 수 없다는 것을 알았다. 그래서 이름을 남겼다."
+    ],
+    fact: "실제 무령왕릉과 같은 결말입니다. 양나라식 벽돌무덤, 일본산 금송 관, 지석과 매지권, 오수전, 진묘수가 모두 나왔습니다. 중국 연호 대신 간지를 썼고, 죽음을 천자의 글자 '붕'으로 적었습니다.",
+    refs: "무령왕 지석 · 왕비 지석 · 『삼국사기』 무령왕조 · 『일본서기』 웅략기·무열기·계체기" },
+  end_other: { end: true, kind: "if", tag: "가상 역사 엔딩", title: "조금 다른 무령왕릉",
+    text: () => [
+      "지석이 이름을 말했다. 무덤의 주인은 백제의 사마왕이다.",
+      "그러나 이 무덤은 우리가 아는 무령왕릉과 조금 다르다.",
+      ...missing().map(k => RELIC[k].miss),
+      "무덤은 그 사람이 걸어온 길만큼만 말한다."
+    ],
+    fact: "실제 무령왕릉에는 양나라식 벽돌, 일본산 금송 관, '붕'이라 적은 지석, 매지권과 오수전이 모두 있습니다. 하나하나가 무령왕 시대 백제의 외교와 자부심을 보여 주는 증거입니다.",
+    refs: "무령왕 지석 · 왕비 지석" },
+  end_nameless: { end: true, kind: "if", tag: "가상 역사 엔딩", title: "무자비(無字碑)",
+    text: [
+      "무덤은 화려했다. 입구에는 돌판도 놓여 있었다. 그러나 돌판에는 글자가 한 자도 없었다.",
+      "학자들은 오랫동안 다투었다. 웅진 시대의 어느 왕일 것이다. 문주인가, 동성인가, 아니면 다른 왕족인가.",
+      "평가를 역사에 맡긴 왕. 그러나 역사는 이름부터 묻는다. 송산리의 다른 무덤들처럼 이 무덤도 '○호분'이라는 번호로만 불리게 되었다."
+    ],
+    fact: "실제로 백제 왕릉 가운데 주인이 확실한 것은 무령왕릉뿐입니다. 지석이 없었다면 무령왕릉도 다른 무덤들처럼 번호로만 불렸을 것입니다.",
+    refs: "무령왕 지석" },
+  end_isle: { end: true, kind: "if", tag: "가상 역사 엔딩", title: "섬의 임금",
+    text: ["당신은 배를 타고 바다를 건넜다. 곤지는 당신을 반겼고, 당신은 왜의 백제계 사람들 사이에서 살았다. 백제 왕위는 다른 사람들 사이를 오갔다. 사람들은 당신을 이름 그대로 불렀다. 섬의 임금."],
+    fact: "실제로 사마는 백제에 남았고, 501년 왕위에 올랐습니다. 다만 그의 집안은 대대로 왜와 깊이 이어져 있었습니다. 곤지와 동성왕 모두 왜에 머문 적이 있습니다.",
+    refs: "『일본서기』 웅략기 5년 · 23년" },
+  end_haegu: { end: true, kind: "dead", tag: "죽음 엔딩", title: "대두성의 잔당",
+    text: ["대두성이 떨어지던 날, 해구의 편에 섰던 사람들은 모두 붙잡혔다. 왕족이라는 이름은 당신을 지켜 주지 못했다. 섬에서 태어난 아이는 열여덟 살에 웅진의 강가에서 생을 마쳤다."],
+    fact: "실제로 해구의 반란은 478년 진씨 가문이 진압했고, 이후 진씨가 큰 세력이 되었습니다. 왕권과 귀족의 힘겨루기는 동성왕 대까지 이어졌습니다.",
+    refs: "『삼국사기』 문주왕·삼근왕조" },
+  end_shadow: { end: true, kind: "if", tag: "가상 역사 엔딩", title: "왕이 되지 않은 사마",
+    text: ["어린 왕 뒤에서 귀족들이 나라를 나누어 가졌다. 당신은 왕의 숙부로 조용히 늙어 갔다. 송산 언덕에 당신을 위한 벽돌무덤은 지어지지 않았고, 1971년 여름 배수로 공사의 삽은 아무것에도 걸리지 않았다."],
+    fact: "실제로 무령왕은 동성왕이 살해된 뒤 즉위해 백가의 반란을 진압했고, 이후 20여 년 동안 웅진 백제를 안정시켰습니다.",
+    refs: "『삼국사기』 무령왕 원년" },
+  end_baekga: { end: true, kind: "dead", tag: "죽음 엔딩", title: "두 번째 칼",
+    text: ["가림성을 얻은 백가는 멈추지 않았다. 왕을 한 번 죽인 사람에게 두 번째는 어렵지 않았다. 즉위한 지 한 해도 되지 않아, 당신은 동성왕과 같은 길을 걸었다."],
+    fact: "실제로 무령왕은 즉위 직후 몸소 우두성까지 나아가 백가의 항복을 받고, 그의 목을 베어 백강에 던졌습니다.",
+    refs: "『삼국사기』 무령왕 원년" },
+  end_goguryeo: { end: true, kind: "dead", tag: "패배 엔딩", title: "위천의 강물",
+    text: ["기병 3천은 너무 적었다. 군사는 모자랐고, 왕의 명령은 장수들 사이에서 무게를 잃었다. 위천의 강물은 백제 군사의 피로 물들었다. 웅진은 또 한 번 북쪽에서 내려오는 말발굽 소리를 들어야 했다."],
+    fact: "실제로 무령왕은 512년 위천 북쪽에서 기병 3천으로 고구려군을 기습해 크게 이겼습니다. 521년 양나라에 보낸 표문의 '여러 번 고구려를 깨뜨렸다'는 말은 이런 승리에 근거합니다.",
+    refs: "『삼국사기』 무령왕 12년 · 21년" },
+  end_revolt: { end: true, kind: "dead", tag: "몰락 엔딩", title: "굶주린 도성",
+    text: ["굶주린 백성들이 웅진 성문으로 몰려왔다. 그들이 원한 것은 곡식이었지만, 귀족들은 그 분노를 왕에게 돌렸다. 한성을 무너뜨린 것이 고구려의 칼이었다면, 웅진을 무너뜨린 것은 텅 빈 곳간이었다."],
+    fact: "실제로 무령왕은 기근 때 창고를 열어 구휼하고, 제방을 고쳐 떠도는 사람들을 농토로 돌려보냈습니다. 민심 안정은 무령왕 대의 중요한 업적입니다.",
+    refs: "『삼국사기』 무령왕 6년 · 10년" },
+  end_coup: { end: true, kind: "dead", tag: "몰락 엔딩", title: "연립정부의 끝",
+    text: ["왕과 귀족이 함께 다스리던 나라에서 그 균형이 무너졌다. 대성8족의 우두머리들이 한밤에 모였다. 문주를 죽인 해구, 동성을 죽인 백가처럼, 또 한 사람의 신하가 칼을 들었다."],
+    fact: "웅진 천도 뒤 백제는 왕권과 대성8족 귀족 사이의 균형 위에 서 있었습니다. 문주왕과 동성왕이 신하에게 살해된 것도 그 균형이 깨졌을 때였습니다. 무령왕은 선왕의 전략을 이어 그 균형을 지켜 냈습니다.",
+    refs: "『삼국사기』 문주왕·동성왕·무령왕조" }
+};
+
+/* ---------- 부장품 ---------- */
+const RELIC = {
+  jiseok: { name: "지석 두 장", found: "입구 앞에 돌판 두 장. '영동대장군 백제 사마왕'. 죽음을 천자의 글자 '붕'으로 적었다.", miss: "지석에는 죽음을 '훙'이라 적었다. 천자의 글자를 쓴 왕의 자부심은 보이지 않는다." },
+  maeji: { name: "매지권과 오수전", found: "돌판 뒷면에는 땅의 신에게서 무덤 땅을 산 계약서. 그 위에 오수전 한 꾸러미.", miss: "땅을 산 계약서도, 오수전 꾸러미도 없다." },
+  brick: { name: "벽돌 아치 무덤", found: "무덤방은 구운 벽돌로 쌓은 아치. 남조 양나라의 방식이다.", miss: "무덤방은 깬돌로 쌓은 백제식 돌방이다. 양나라와 이어진 흔적은 보이지 않는다." },
+  lotus: { name: "연꽃무늬 벽돌", found: "벽마다 연꽃무늬 벽돌. 웅진에서 자라난 불교가 무덤 벽에 피어 있다.", miss: "벽돌에 연꽃은 없다." },
+  coffin: { name: "금송 목관", found: "관은 일본 열도에서만 자라는 금송으로 짰다. 바다 건너 왜와 이어진 증거다.", miss: "관은 백제 땅의 나무로 짰다. 왜에서 건너온 나무는 없다." },
+  celadon: { name: "중국 청자", found: "양나라에서 건너온 청자 항아리와 등잔.", miss: "중국에서 건너온 청자는 보이지 않는다." },
+  beast: { name: "진묘수", found: "입구를 지키는 뿔 하나 달린 돌짐승, 진묘수. 땅의 신들에게 무덤을 맡긴 옛 믿음이다.", miss: "무덤을 지키는 돌짐승은 없다." }
+};
+function relics() {
+  const r = [];
+  if (S.stone === "beng") r.push("jiseok");
+  if (S.stone) r.push("maeji");
+  if (S.yang >= 60) r.push("brick");
+  if (S.yang >= 60 && S.buddha >= 2) r.push("lotus");
+  if (S.wa >= 60) r.push("coffin");
+  if (S.liang) r.push("celadon");
+  if (S.rites || S.stone) r.push("beast");
+  return r;
+}
+function missing() {
+  const r = relics();
+  return Object.keys(RELIC).filter(k => !r.includes(k));
+}
+function tombEnding() {
+  if (!S.stone) return "end_nameless";
+  return relics().length === Object.keys(RELIC).length ? "end_tomb" : "end_other";
+}
+
+/* ---------- 돌발 사건 (사료에 없는 가상 사건) ---------- */
+const EV = {
+  ev_flood: { place: "웅진 · 금강", title: "금강이 넘치다",
+    text: ["여름 장마에 금강이 넘쳤다. 강가 마을들이 물에 잠기고, 왕궁 아래 나루까지 흙탕물이 차올랐다."],
+    choices: [
+      { label: "군사를 풀어 둑을 쌓는다", eff: { people: 10, army: -5 }, res: ["병사들이 밤새 흙 자루를 날랐다. 물이 빠지자 마을 사람들이 병사들에게 밥을 지어 날랐다."] },
+      { label: "귀족들에게 맡긴다", eff: { nobles: 5, people: -10 }, res: ["큰 가문들은 자기 땅부터 막았다. 가난한 마을의 논은 그해 다시 일어서지 못했다."] }
+    ] },
+  ev_spy: { place: "웅진 · 왕궁", title: "바둑 두는 승려",
+    text: ["고구려에서 왔다는 승려가 바둑을 잘 둔다며 왕을 뵙기를 청한다. 늙은 신하 하나가 낯빛이 하얗게 질렸다. '도림이 꼭 저렇게 왔습니다.'"],
+    choices: [
+      { label: "만나되, 뒤를 캔다", eff: { power: 5, gold: -5 }, res: ["승려의 짐에서 웅진성 성벽을 그린 그림이 나왔다. 역사는 같은 수를 두 번 두려 했다."] },
+      { label: "승려라면 누구든 내쫓는다", eff: { power: 5, people: -5 }, set: { buddha: () => Math.max(0, S.buddha - 1) }, res: ["승려들이 웅진을 떠났다. 절의 종소리가 한동안 들리지 않았다."] },
+      { label: "의심 없이 맞아들인다", eff: { power: -10, people: 5 }, res: ["승려는 한 달 동안 왕과 바둑을 두다가 어느 날 밤 사라졌다. 무엇을 보고 갔는지 아무도 모른다."] }
+    ] },
+  ev_gaya: { place: "웅진 · 나루", title: "가야의 사신",
+    text: ["가야의 한 나라가 사신을 보냈다. 쇠를 넉넉히 줄 테니 신라를 함께 견제하자고 한다."],
+    choices: [
+      { label: "손을 잡는다", eff: { gold: 10, army: 5, nobles: -5 }, res: ["가야의 덩이쇠가 웅진 대장간에 쌓였다. 신라는 이 소식을 반기지 않았다."] },
+      { label: "나제동맹을 생각해 돌려보낸다", eff: { people: 5, gold: -5 }, res: ["신라와의 약속을 지켰다. 가야 사신은 왜 쪽으로 배를 돌렸다."] }
+    ] },
+  ev_wae: { place: "웅진 · 나루", title: "왜에서 온 배",
+    text: ["왜에서 배가 들어왔다. 당신이 태어난 섬 이야기를 아는 늙은 뱃사공이 타고 있었다. '각라도 사람들은 아직도 그 섬을 임금님 섬이라 부릅니다.'"],
+    choices: [
+      { label: "선물을 듬뿍 들려 보낸다", eff: { wa: 15, gold: -10 }, set: { wae: true }, res: ["뱃사공은 울면서 절했다. 왜와 이어진 길이 한 뼘 더 굳어졌다."] },
+      { label: "지난 일이라며 담담히 보낸다", eff: { power: 5 }, res: ["뱃사공은 서운한 얼굴로 돌아갔다. 왕은 그날 밤 오래 바다 쪽을 보았다."] }
+    ] }
+};
+for (const k in EV) {
+  EV[k].ev = true; EV[k].date = "돌발 사건";
+  EV[k].choices.forEach(c => { c.go = () => pending; });
+  N[k] = EV[k];
+}
+const EV_SLOTS = ["haegu", "dongseong", "goguryeo", "famine", "temple", "wae", "liang"];
+const EV_MAX = 3;
+const ENDS = Object.keys(N).filter(k => N[k].end);
+
+/* ---------- 장면별 배경 (그림 파일이 생기면 IMG 에 넣는다) ---------- */
+const ART = {
+  dig: "dig", mono: "sea", hanseong: "fire", haegu: "river", dongseong: "palace",
+  murder: "snow", baekga: "battle", goguryeo: "battle", famine: "field", temple: "temple", wae: "harbor", liang: "liang",
+  funeral: "tomb", epilogue: "dig",
+  end_tomb: "tomb", end_other: "tomb", end_nameless: "dig", end_isle: "sea", end_haegu: "palace", end_shadow: "dig",
+  end_baekga: "snow", end_goguryeo: "battle", end_revolt: "field", end_coup: "palace",
+  ev_flood: "river", ev_spy: "palace", ev_gaya: "harbor", ev_wae: "harbor"
+};
+const IMG = {};   // 예: { tomb: "assets/bg_tomb.webp" }
+
+
+/* ---------- 코드로 그리는 배경 ---------- */
+const SCN = {
+  dig:    { sky: ["#0a1214", "#1c2a2c"], rain: true, hills: [["#132023", 600], ["#0c1517", 690]], arch: true },
+  night:  { sky: ["#090d18", "#1f2640"], moon: [1240, 170], stars: true, hills: [["#141a2b", 650]], roof: [800, 640, 1.3, "#0a0d16"], lamps: true },
+  sea:    { sky: ["#0a1322", "#2c4060"], moon: [1150, 160], stars: true, water: ["#16283e", "#08111c"], island: true, ship: [520, 640] },
+  fire:   { sky: ["#170604", "#6a200d"], glow: true, hills: [["#2a0d07", 640]], roof: [640, 640, 1.1, "#120403"], roof2: [1160, 670, .8, "#120403"], smoke: true },
+  river:  { sky: ["#1b2231", "#c47c48"], sun: [1180, 520, "#ffd9a0"], hills: [["#2b303b", 540], ["#1c2029", 610]], water: ["#3b4955", "#121820"], roof: [420, 560, .55, "#141820"] },
+  palace: { sky: ["#161d2e", "#46536f"], hills: [["#1b2232", 620]], roof: [800, 660, 1.5, "#0d111b"], lamps: true },
+  battle: { sky: ["#2a2824", "#8b7b5c"], dust: true, hills: [["#3b352b", 640], ["#29251e", 720]], spears: true },
+  field:  { sky: ["#3b2a14", "#dba45a"], sun: [800, 300, "#fff2c4"], hills: [["#6a4a23", 650]], rows: true },
+  temple: { sky: ["#152024", "#57727b"], moon: [1260, 190], hills: [["#1d2b2f", 590], ["#131c1f", 680]], pagoda: [1040, 650], water: ["#2b3e45", "#10181b"] },
+  harbor: { sky: ["#18222f", "#6d8199"], hills: [["#1c2631", 560]], water: ["#2b3e51", "#111a25"], ship: [600, 650], ship2: [1120, 690] },
+  liang:  { sky: ["#2b0f0e", "#a5562d"], sun: [1300, 250, "#ffd48c"], hills: [["#3b1511", 690]], roof: [800, 640, 1.7, "#280a07"] },
+  snow:   { sky: ["#121820", "#48525f"], snow: true, hills: [["#c9d1da", 690], ["#97a2ae", 760]] },
+  tomb:   { vault: true }
+};
+function rng(seed) { let x = seed; return () => (x = (x * 9301 + 49297) % 233280) / 233280; }
+function hill(color, base, seed) {
+  const r = rng(seed); let d = `M0 900 L0 ${base}`;
+  for (let x = 0; x <= 1600; x += 100) d += ` Q${x + 50} ${base - 40 - r() * 90} ${x + 100} ${base - r() * 40}`;
+  return `<path d="${d} L1600 900 Z" fill="${color}"/>`;
+}
+function roof(x, y, s, c) {
+  const w = 420 * s, h = 70 * s, b = 120 * s;
+  return `<g fill="${c}"><rect x="${x - w * .42}" y="${y - b}" width="${w * .84}" height="${b}"/>
+    <path d="M${x - w / 2 - 30 * s} ${y - b - 6 * s} Q${x - w / 2} ${y - b + 6 * s} ${x - w * .38} ${y - b - 4 * s} L${x - w * .22} ${y - b - h} L${x + w * .22} ${y - b - h} L${x + w * .38} ${y - b - 4 * s} Q${x + w / 2} ${y - b + 6 * s} ${x + w / 2 + 30 * s} ${y - b - 6 * s} Z"/>
+    <rect x="${x - w / 2}" y="${y}" width="${w}" height="${14 * s}"/></g>`;
+}
+function svgBg(key) {
+  const c = SCN[key] || SCN.night, r = rng(key.length * 97 + 13);
+  if (c.vault) return tombSvg();
+  let g = `<defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c.sky[0]}"/><stop offset="1" stop-color="${c.sky[1]}"/></linearGradient>
+    <radialGradient id="gl"><stop offset="0" stop-color="#ffb04a" stop-opacity=".75"/><stop offset="1" stop-color="#ff5a1a" stop-opacity="0"/></radialGradient>
+    <filter id="bl"><feGaussianBlur stdDeviation="18"/></filter></defs>
+    <rect width="1600" height="900" fill="url(#sk)"/>`;
+  if (c.stars) for (let i = 0; i < 70; i++) g += `<circle cx="${r() * 1600}" cy="${r() * 420}" r="${r() * 1.8 + .4}" fill="#fff" opacity="${r() * .6 + .2}"/>`;
+  if (c.moon) g += `<circle cx="${c.moon[0]}" cy="${c.moon[1]}" r="90" fill="#f4ecd0" opacity=".12" filter="url(#bl)"/><circle cx="${c.moon[0]}" cy="${c.moon[1]}" r="42" fill="#efe6c8"/>`;
+  if (c.sun) g += `<circle cx="${c.sun[0]}" cy="${c.sun[1]}" r="160" fill="${c.sun[2]}" opacity=".25" filter="url(#bl)"/><circle cx="${c.sun[0]}" cy="${c.sun[1]}" r="64" fill="${c.sun[2]}" opacity=".9"/>`;
+  if (c.glow) g += `<ellipse cx="800" cy="760" rx="900" ry="380" fill="url(#gl)"/>`;
+  (c.hills || []).forEach((h, i) => { g += hill(h[0], h[1], i * 31 + key.length); });
+  if (c.water) g += `<linearGradient id="wt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c.water[0]}"/><stop offset="1" stop-color="${c.water[1]}"/></linearGradient><rect y="640" width="1600" height="260" fill="url(#wt)"/>`
+    + Array.from({ length: 14 }, () => `<rect x="${r() * 1500}" y="${660 + r() * 220}" width="${60 + r() * 160}" height="2" fill="#fff" opacity=".12"/>`).join("");
+  if (c.island) g += `<path d="M120 650 Q300 520 520 650 Z" fill="#0b141d"/><path d="M1280 655 Q1380 590 1500 655 Z" fill="#0d1822"/>`;
+  if (c.roof) g += roof(...c.roof);
+  if (c.roof2) g += roof(...c.roof2);
+  if (c.lamps) for (let i = 0; i < 6; i++) g += `<circle cx="${560 + i * 96}" cy="${c.roof ? c.roof[1] - 40 : 600}" r="5" fill="#ffcf7a" opacity=".85"/>`;
+  if (c.pagoda) { const [x, y] = c.pagoda; for (let i = 0; i < 5; i++) { const w = 120 - i * 18, yy = y - i * 52; g += `<rect x="${x - w / 3}" y="${yy - 36}" width="${w * .66}" height="36" fill="#0e1517"/><path d="M${x - w / 2 - 10} ${yy - 36} L${x + w / 2 + 10} ${yy - 36} L${x + w / 2 - 6} ${yy - 48} L${x - w / 2 + 6} ${yy - 48} Z" fill="#0b1113"/>`; } g += `<rect x="${x - 3}" y="${y - 320}" width="6" height="60" fill="#0b1113"/>`; }
+  const ship = (x, y, s = 1) => `<g fill="#0a1018"><path d="M${x - 110 * s} ${y} L${x + 110 * s} ${y} L${x + 80 * s} ${y + 30 * s} L${x - 80 * s} ${y + 30 * s} Z"/><rect x="${x - 3}" y="${y - 150 * s}" width="6" height="${150 * s}"/><path d="M${x + 4} ${y - 140 * s} L${x + 90 * s} ${y - 40 * s} L${x + 4} ${y - 30 * s} Z" opacity=".85"/></g>`;
+  if (c.ship) g += ship(...c.ship);
+  if (c.ship2) g += ship(c.ship2[0], c.ship2[1], .6);
+  if (c.smoke) for (let i = 0; i < 8; i++) g += `<ellipse cx="${200 + r() * 1200}" cy="${150 + r() * 300}" rx="${160 + r() * 200}" ry="${50 + r() * 60}" fill="#1a0b08" opacity=".55" filter="url(#bl)"/>`;
+  if (c.dust) g += `<ellipse cx="900" cy="640" rx="700" ry="120" fill="#c9b48a" opacity=".25" filter="url(#bl)"/>`;
+  if (c.spears) for (let i = 0; i < 40; i++) { const x = 100 + r() * 1400, y = 620 + r() * 60; g += `<rect x="${x}" y="${y - 120}" width="3" height="120" fill="#1c1914"/><path d="M${x - 4} ${y - 120} L${x + 1.5} ${y - 140} L${x + 7} ${y - 120} Z" fill="#1c1914"/>`; }
+  if (c.rows) for (let i = 0; i < 10; i++) g += `<path d="M${800 - i * 10} 650 L${-200 + i * 40} 900" stroke="#4a3216" stroke-width="3" opacity=".6"/><path d="M${800 + i * 10} 650 L${1800 - i * 40} 900" stroke="#4a3216" stroke-width="3" opacity=".6"/>`;
+  if (c.snow) for (let i = 0; i < 160; i++) g += `<circle cx="${r() * 1600}" cy="${r() * 900}" r="${r() * 3 + 1}" fill="#fff" opacity="${r() * .6 + .3}"/>`;
+  if (c.rain) for (let i = 0; i < 140; i++) { const x = r() * 1700, y = r() * 900; g += `<path d="M${x} ${y} l-14 46" stroke="#a9c3c9" stroke-width="1.4" opacity=".28"/>`; }
+  if (c.arch) g += `<defs><pattern id="br" width="64" height="32" patternUnits="userSpaceOnUse"><rect width="64" height="32" fill="#5b4330"/><path d="M0 16H64M32 0V16M0 16V32M64 16V32" stroke="#2e2117" stroke-width="3"/></pattern></defs>
+    <path d="M560 900 L560 560 Q800 330 1040 560 L1040 900 Z" fill="url(#br)"/><path d="M640 900 L640 600 Q800 440 960 600 L960 900 Z" fill="#050807"/>
+    <ellipse cx="800" cy="900" rx="520" ry="60" fill="#0a0f0f"/>`;
+  return `<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${g}</svg>`;
+}
+function tombSvg() {
+  const lotus = (x, y) => `<g transform="translate(${x} ${y})"><circle r="15" fill="none" stroke="#b28a5c" stroke-width="2"/>${[0, 45, 90, 135, 180, 225, 270, 315].map(a => `<ellipse rx="4" ry="10" transform="rotate(${a}) translate(0 -9)" fill="#b28a5c" opacity=".8"/>`).join("")}</g>`;
+  let l = ""; for (let y = 120; y < 900; y += 96) for (let x = 64; x < 1600; x += 128) l += lotus(x + ((y / 96) % 2) * 64, y);
+  return `<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs><pattern id="tb" width="64" height="32" patternUnits="userSpaceOnUse"><rect width="64" height="32" fill="#6a4e36"/><path d="M0 16H64M32 0V16M0 16V32M64 16V32" stroke="#3a2a1d" stroke-width="3"/></pattern>
+    <radialGradient id="lt" cx=".5" cy=".42" r=".7"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".82"/></radialGradient></defs>
+    <rect width="1600" height="900" fill="url(#tb)"/><g opacity=".55">${l}</g>
+    <path d="M0 0 H1600 V120 Q800 -60 0 120 Z" fill="#2e2117"/>
+    ${[380, 1220].map(x => `<path d="M${x - 46} 470 L${x - 46} 400 Q${x} 350 ${x + 46} 400 L${x + 46} 470 Z" fill="#1c140d"/><circle cx="${x}" cy="440" r="9" fill="#ffcf7a"/><circle cx="${x}" cy="440" r="60" fill="#ffb24a" opacity=".18"/>`).join("")}
+    <rect width="1600" height="900" fill="url(#lt)"/></svg>`;
+}
+const bgHtml = k => IMG[k] ? `<img src="${IMG[k]}" alt="">` : svgBg(k);
+
+/* ---------- 엔딩·부장품 기록 (이 브라우저에만) ---------- */
+function load(key) { try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch { return []; } }
+function save(key, ids) { try { const g = new Set(load(key)); ids.forEach(i => g.add(i)); localStorage.setItem(key, JSON.stringify([...g])); } catch {} }
+
+/* ---------- 그리기 ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const val = v => typeof v === "function" ? v() : v;
+
+function paintHud(d = {}) {
+  for (const k of ALL) {
+    if (typeof S[k] !== "number") S[k] = START[k];
+    $("v-" + k).innerHTML = S[k] + (d[k] ? `<span class="delta ${d[k] > 0 ? "up" : "down"}">${d[k] > 0 ? "+" : ""}${d[k]}</span>` : "");
+    $("b-" + k).style.width = S[k] + "%";
+  }
+  // 불심은 얻은 뒤부터 우호 패널 아래에 보인다
+  const b = Math.max(0, S.buddha || 0);
+  $("buddha-row").hidden = !b;
+  $("v-buddha").textContent = "✿".repeat(Math.min(b, 5));
+  $("b-buddha").style.width = Math.min(100, b * 20) + "%";
+}
+const josa = w => w + ((w.charCodeAt(w.length - 1) - 0xAC00) % 28 ? "이" : "가");
+const arrow = (k, v) => `<span class="delta ${v > 0 ? "up" : "down"}">${NAME[k]} ${v > 0 ? "▲" : "▼"}</span>`;
+const FAILS = [
+  "일은 뜻대로 풀리지 않았다. 애쓴 만큼의 값만 치렀다.",
+  "누군가 계획을 흘렸다. 일이 시작되기도 전에 틀어졌다.",
+  "때가 맞지 않았다. 같은 일도 때를 만나지 못하면 헛수고가 된다.",
+  "하늘이 돕지 않았다. 준비한 것은 어긋나고 잃은 것만 남았다."
+];
+function change(d, failed) {
+  const t = ALL.filter(k => d[k]).map(k => arrow(k, d[k]));
+  if (failed) t.unshift(`<span class="delta down fail">뜻을 이루지 못했다</span>`);
+  return t.length ? `<div class="changes">${t.join("")}</div>` : "";
+}
+function toLines(arr, mono) {
+  return arr.map(t => typeof t === "string" ? { text: t, name: mono ? "사마" : "", mono }
+    : t.note ? { text: t.note, note: true } : { text: t.line, name: t.who });
+}
+function srcBox(src) {
+  if (!src) return "";
+  return `<div class="srcpop" hidden><div class="han" lang="zh-Hant">${esc(src[1])}</div><div class="pg">${esc(src[2])}</div></div>`;
+}
+
+let vn = null;
+const slow = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+function frame(id) {
+  const n = N[id];
+  document.body.classList.add("playing");
+  $("stage").innerHTML = `<div class="vn${n.ev ? " ev" : ""}${n.end ? " end" : ""}" id="vn">
+    <div class="bg">${bgHtml(ART[id] || "night")}</div>
+    <div class="place"><span>${esc(n.date || n.tag || "")}${n.place ? " · " + esc(n.place) : ""}</span><b>${esc(n.title)}</b>${n.src ? `<button class="ghost srcbtn" id="srcbtn" type="button">사료 · ${esc(n.src[0])}</button>` : ""}</div>
+    ${srcBox(n.src)}
+    <div class="box" id="box"><div class="name" id="name" hidden></div><div class="line" id="line"></div><div class="more" id="more">▼</div></div>
+    <div class="menu" id="menu" hidden></div>
+  </div>`;
+  $("vn").onclick = e => { if (!e.target.closest("button, .menu, .srcpop")) advance(); };
+  if (n.src) $("srcbtn").onclick = () => { const p = $("stage").querySelector(".srcpop"); p.hidden = !p.hidden; };
+}
+function play(lines, done, extra = "") {
+  clearInterval(vn?.timer);
+  vn = { lines, i: 0, done, extra };
+  $("menu").hidden = true;
+  show();
+}
+function show() {
+  const L = vn.lines[vn.i];
+  const nm = $("name");
+  nm.hidden = !L.name; nm.textContent = L.name || "";
+  const line = $("line");
+  line.className = "line" + (L.note ? " note" : "") + (L.mono ? " mono" : "");
+  const tail = vn.i === vn.lines.length - 1 && vn.extra ? vn.extra : "";
+  $("more").hidden = true;
+  const finish = () => { clearInterval(vn.timer); vn.typing = false; line.innerHTML = esc(L.text) + tail; $("more").hidden = false; };
+  vn.finish = finish;
+  if (slow()) return finish();
+  let k = 0; vn.typing = true; line.textContent = "";
+  vn.timer = setInterval(() => { k += 2; line.textContent = L.text.slice(0, k); if (k >= L.text.length) finish(); }, 28);
+}
+function advance() {
+  if (!vn || !$("vn") || !$("menu").hidden) return;
+  if (vn.typing) return vn.finish();
+  if (vn.i < vn.lines.length - 1) { vn.i++; show(); }
+  else { const f = vn.done; vn.done = null; f && f(); }
+}
+document.addEventListener("keydown", e => {
+  if ((e.key === " " || e.key === "Enter") && $("vn") && e.target.tagName !== "BUTTON") { e.preventDefault(); advance(); }
+});
+function openMenu(html) {
+  $("more").hidden = true;
+  const m = $("menu"); m.innerHTML = `<div class="menu-in">${html}</div>`; m.hidden = false;
+  return m;
+}
+
+function render(id, d = {}) {
+  cur = id;
+  const n = N[id];
+  paintHud(d);
+  frame(id);
+  if (n.end) {
+    save("sama-ends", [id]);
+    const got = relics();
+    if (id === "end_tomb" || id === "end_other") save("sama-relics", got);
+    play(toLines(val(n.text)), () => {
+      openMenu(`<div class="endcard"><span class="kind ${n.kind}">${esc(n.tag)}</span><h2>${esc(n.title)}</h2>
+        ${got.length && (id === "end_tomb" || id === "end_other") ? `<div class="relics">${Object.keys(RELIC).map(k => `<span class="${got.includes(k) ? "on" : ""}">${esc(RELIC[k].name)}</span>`).join("")}</div>` : ""}
+        <div class="fact"><b>실제로는</b> ${esc(n.fact)}</div>
+        <div class="note">관련 사료: ${esc(n.refs)} · 모은 엔딩 ${load("sama-ends").length} / ${ENDS.length}</div></div>
+        <button class="choice next" id="again" type="button">처음부터 다시</button>`);
+      $("again").onclick = restart;
+    });
+    return;
+  }
+  play(toLines(val(n.text), n.mono), () => {
+    if (n.choices.length === 1 && n.choices[0].next) return pick(n.choices[0]);
+    const m = openMenu(n.choices.map((c, i) => {
+      const need = Object.entries(c.need || {});
+      const locked = need.some(([k, v]) => S[k] < v) || !!val(c.lock);
+      const sub = [need.map(([k, v]) => S[k] < v ? `${josa(NAME[k])} 모자라다` : `${josa(NAME[k])} 받쳐 줘야 한다`).join(" · "), val(c.lock) ? val(c.lockText) : "", val(c.sub) || ""].filter(Boolean).join(" · ");
+      const cost = typeof c.eff === "function" ? `<span class="delta fate">결과는 알 수 없다</span>`
+        : ALL.filter(k => c.eff?.[k]).map(k => arrow(k, c.eff[k])).join("");
+      return `<button class="choice${c.next ? " next" : ""}" data-i="${i}" type="button"${locked ? " disabled" : ""}>${esc(c.label)}${sub ? `<small>${esc(sub)}</small>` : ""}${cost ? `<span class="cost">${cost}</span>` : ""}</button>`;
+    }).join(""));
+    m.querySelectorAll("[data-i]").forEach(b => b.onclick = () => pick(n.choices[+b.dataset.i]));
+  });
+}
+
+/* 선택은 열에 여덟은 뜻대로 된다. 다음으로 넘기기·결말로 가는 선택·즉위와 장례는 실패하지 않는다 */
+const SUCCESS = 0.8;
+function risky(c) {
+  if (c.next || N[cur]?.sure) return false;
+  if (typeof c.go === "string" && N[c.go]?.end) return false;
+  return typeof c.eff === "function" || Object.values(c.eff || {}).some(v => v > 0) || !!c.set;
+}
+function pick(c) {
+  const d = {};
+  const failed = risky(c) && Math.random() > SUCCESS;
+  const res = failed ? (c.fail || [FAILS[Math.floor(Math.random() * FAILS.length)]]) : val(c.res);   // 결과 문단은 수치 변경 전 상태로 판단
+  let go = val(c.go);
+  const eff = failed ? Object.fromEntries(Object.entries(typeof c.eff === "object" ? c.eff : {}).filter(([, v]) => v < 0)) : (val(c.eff) || {});
+  for (const k in eff) { const before = S[k]; S[k] = clamp(S[k] + eff[k]); d[k] = S[k] - before; }
+  if (!failed) for (const k in c.set || {}) S[k] = val(c.set[k]);
+  if (!N[go]?.end && go !== "funeral" && go !== "epilogue") {
+    if (S.people <= 0) go = "end_revolt";
+    else if (S.nobles <= 0 || S.power <= 0) go = "end_coup";
+    else go = maybeEvent(go);
+  }
+  if (!res) return render(go, d);
+  cur = go;
+  paintHud(d);
+  play(toLines(res), () => render(go), change(d, failed));
+}
+function maybeEvent(go) {
+  if (N[cur]?.ev || !EV_SLOTS.includes(go) || S.evs >= EV_MAX || Math.random() > 0.5) return go;
+  const left = Object.keys(EV).filter(k => !S.seen.includes(k));
+  if (!left.length) return go;
+  const k = left[Math.floor(Math.random() * left.length)];
+  S.evs++; S.seen.push(k); pending = go;
+  return k;
+}
+
+function page(html) {
+  document.body.classList.remove("playing");
+  $("stage").innerHTML = html;
+  window.scrollTo({ top: 0 });
+}
+function book() {
+  const got = new Set(load("sama-ends")), rel = new Set(load("sama-relics"));
+  page(`<article class="scene"><div class="art">${svgBg("tomb")}</div><div class="inner"><h2>도감</h2>
+    <p class="note">엔딩 ${got.size} / ${ENDS.length} · 부장품 ${rel.size} / ${Object.keys(RELIC).length} · 이 브라우저에만 기록됩니다.</p>
+    <h3>엔딩</h3>
+    <div class="book">${ENDS.map(k => got.has(k)
+      ? `<div class="got"><b>${esc(N[k].title)}</b><br><span class="note">${esc(N[k].tag)}</span></div>`
+      : `<div class="no">？？？<br><span class="note">${esc(N[k].tag)}</span></div>`).join("")}</div>
+    <h3>부장품</h3>
+    <div class="book">${Object.keys(RELIC).map(k => rel.has(k)
+      ? `<div class="got"><b>${esc(RELIC[k].name)}</b><br><span class="note">${esc(RELIC[k].found)}</span></div>`
+      : `<div class="no">？？？</div>`).join("")}</div>
+  </div></article>
+  <div class="choices" style="margin-top:12px"><button class="choice next" id="back" type="button">돌아가기</button></div>`);
+  $("back").onclick = () => N[cur] ? render(cur) : cover();
+}
+function cover() {
+  reset(); cur = "cover";
+  paintHud();
+  page(`<article class="scene cover"><div class="art">${svgBg("tomb")}<div class="mast"><div class="han" lang="zh-Hant">斯麻</div><div class="ko">사마 · 무령왕, 이름을 남긴 왕</div></div></div><div class="inner">
+    <div class="eyebrow"><span>461~523</span><span>백제 · 한성 → 웅진</span></div>
+    <p class="lede">1971년 여름, 공주 송산리에서 배수로를 파던 삽 끝에 벽돌 하나가 걸렸다. 그 아래에는 천사백 년 동안 아무도 열지 않은 무덤이 있었고, 무덤 입구의 돌판에는 한 사람의 이름이 새겨져 있었다.</p>
+    <p>섬에서 태어나 배 한 척에 실려 백제로 온 아이. 불타는 한성을 피해 웅진으로 떠밀려 온 왕족. 형과 아우의 피 위에서 왕이 된 사람. 그가 어떻게 살았느냐에 따라, 1971년에 열릴 무덤의 모습이 달라진다.</p>
+    <h3>등장인물</h3>
+    <div class="cast">
+      <div><b>사마 · 무령왕</b>당신. 461년 각라도에서 태어났다. 아버지가 누구인지는 기록마다 다르다.</div>
+      <div><b>개로왕 · 곤지</b>한성의 왕과 그 아우. 곤지는 왜에 오래 머물렀다.</div>
+      <div><b>문주왕 · 해구</b>웅진으로 천도한 왕과, 군권을 쥔 해씨 귀족.</div>
+      <div><b>동성왕 · 백가</b>곤지의 아들 말다와, 그가 키운 위사좌평.</div>
+      <div><b>명농 · 성왕</b>당신의 아들. 마지막에 당신을 묻을 사람.</div>
+      <div><b>대성8족</b>해·진·연·백 등 웅진 백제를 함께 떠받친 큰 가문들.</div>
+    </div>
+    <h3>하는 법</h3>
+    <ul class="how">
+      <li><b>군사력</b>은 전쟁과 반란 진압에, <b>재정</b>은 구휼·공사·절 후원·사신단에 쓰인다. 텅 빈 창고로 시작하니 아껴 써야 한다.</li>
+      <li><b>왕권</b>과 <b>귀족 협력</b>의 균형이 핵심이다. 어느 하나가 0이 되면 귀족이 칼을 든다. <b>민심</b>이 0이 되면 도성이 무너진다.</li>
+      <li>오른쪽의 <b>양나라 우호</b>가 높아야 벽돌무덤을, <b>왜 우호</b>가 높아야 금송 관을 쓸 수 있다. 왕권이 아주 강하면 지석에 죽음을 천자의 글자 '붕'으로 적는다.</li>
+      <li>선택은 열에 여덟은 뜻대로 되지만, 둘은 어긋난다. 실패하면 얻는 것 없이 대가만 치른다.</li>
+      <li>엔딩마다 1971년 발굴 장면이 나오고, 무덤에서 나온 <b>부장품</b>이 도감에 모인다. 일곱 가지를 다 모아야 실제 무령왕릉이 된다.</li>
+      <li>빨간 표시는 사료에 없는 가상 사건이다. '사료' 버튼의 원문은 기억에 의존해 입력했으니 수업 사료와 대조할 것. 쪽수는 미확인이다.</li>
+    </ul>
+  </div></article>
+  <div class="choices" style="margin-top:12px"><button class="choice start" id="go" type="button">시작하기</button></div>`);
+  $("go").onclick = () => render("mono");
+}
+function restart() { cover(); }
+$("btn-restart").onclick = restart;
+$("btn-book").onclick = book;
+
+function start(data) {
+  if (data && data.S && data.cur && N[data.cur] && "yang" in data.S) {
+    reset();
+    S = Object.assign(S, data.S);            // 이전 판에 없던 수치(군사력·재정 등)는 기본값으로 채운다
+    for (const k of ALL) if (typeof S[k] !== "number") S[k] = START[k];
+    pending = data.pending || null; render(data.cur);
+  }
+  else restart();
+}
+window.claude?.hot?.snapshot?.(() => ({ S, cur, pending }));
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+
+</script>
+</body>
+</html>
