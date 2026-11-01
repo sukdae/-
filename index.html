@@ -399,6 +399,22 @@ html, body, .vn, .title-screen, .menu { touch-action: manipulation; }
 body.playing .sprite { height: 84%; }
 @media (max-width: 640px) { body.playing .sprite { height: 62%; bottom: 18%; } body.playing .sprite.l { left: 28%; } body.playing .sprite.r { left: 72%; } }
 @media (orientation: landscape) and (max-height: 500px) { body.playing .sprite { height: 92%; bottom: 0; } }
+
+/* 휴대폰: 인물을 줄여 위쪽 수치와 겹치지 않게, 둘일 때는 양옆으로 */
+@media (max-width: 640px) {
+  body.playing .sprite { height: 50%; bottom: 17%; }
+  body.playing .sprite.l, body.playing .sprite.r { height: 40%; }
+  body.playing .sprite.l { left: 22%; } body.playing .sprite.r { left: 78%; }
+}
+
+/* 배경 그림: 평소에는 원본만 꽉 채운다 */
+.vn .bg img.blur { display: none; }
+/* 세로 휴대폰의 결말·발굴 장면: 그림을 자르지 않고 통째로, 남는 곳은 같은 그림을 흐리게 */
+@media (max-width: 640px) and (orientation: portrait) {
+  body.playing .vn.fit .bg img.blur { display: block; position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(14px) brightness(.7) saturate(1); transform: scale(1.15); }
+  body.playing .vn.fit .bg img.main { position: absolute; left: 0; right: 0; top: 27%; bottom: auto; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: contain; filter: brightness(.95); box-shadow: 0 10px 40px rgba(0,0,0,.6); }
+  body.playing .vn.fit::after { background: linear-gradient(to bottom, rgba(0,0,0,.35) 0%, transparent 20%, transparent 70%, rgba(0,0,0,.4) 100%); }
+}
 </style>
 </head>
 <body>
@@ -474,14 +490,14 @@ const N = {
   haegu: {
     date: "475~478년", place: "웅진 · 대두성", title: "쫓겨 온 도읍",
     text: [
-      "문주는 웅진으로 떠밀려 내려와 대성8족에게 자리를 나누었다. 왕과 귀족이 함께 다스리는 연립정부였고, 군권은 해구가 쥐었다.",
-      "477년 문주왕은 해구가 보낸 도적에게 죽었다. 열세 살 삼근왕이 섰지만, 이듬해 해구는 대두성에서 반란을 일으켰다. 진씨 가문의 진로가 토벌에 나선다."
+      { text: "문주는 웅진으로 떠밀려 내려와 대성8족에게 자리를 나누었다. 왕과 귀족이 함께 다스리는 연립정부였고, 군권은 해구가 쥐었다.", cast: ["munju"] },
+      { text: "477년 문주왕은 해구가 보낸 도적에게 죽었다. 열세 살 삼근왕이 섰지만, 이듬해 해구는 대두성에서 반란을 일으켰다. 진씨 가문의 진로가 토벌에 나선다.", cast: ["haegu"] }
     ],
     choices: [
       { label: "진로의 군에 들어가 해구를 친다", cast: ["jinro"], fail: ["당신이 맡은 부대는 대두성 아래에서 무너졌다. 반란은 진로의 손으로 끝났고, 공은 모두 진씨의 것이 되었다."], eff: { army: 10, power: 5, nobles: -5 },
         res: ["해구는 죽었다. 진씨는 백제에서 가장 큰 가문이 되었고, 진로는 당신의 이름을 기억했다."], go: "dongseong" },
       { label: "해구 편에 선다", eff: { nobles: 10 }, go: "end_haegu" },
-      { label: "금강가 초막 절에 머물며 지켜본다", cast: ["monk"], eff: { people: 5, nobles: 5, power: -5 }, set: { buddha: 1 },
+      { label: "금강가 초막 절에 머물며 지켜본다", eff: { people: 5, nobles: 5, power: -5 }, set: { buddha: 1 },
         res: ["한성에서 내려온 늙은 승려가 말했다. '도림 같은 자 때문에 부처를 원망하지 마시오. 칼을 쥔 손이 죄지, 경전이 무슨 죄겠소.'"], go: "dongseong" }
     ]
   },
@@ -526,7 +542,7 @@ const N = {
     ],
     src: ["삼국사기 무령왕 원년", "春正月 佐平苩加據加林城叛 王帥兵馬至牛頭城 命扦率解明討之 苩加出降 王斬之 投於白江", "『삼국사기』 권26 백제본기 제4 무령왕 원년(501) 정월 · 扦은 『삼국사절요』에 扞 · 원문: 국사편찬위원회 한국사데이터베이스", "봄 정월, 좌평 백가가 가림성을 거점으로 반란을 일으켰다. 왕이 군사와 말을 거느리고 우두성에 이르러 한솔 해명에게 토벌을 명하였다. 백가가 나와 항복하자, 왕이 그의 목을 베어 백강에 던졌다."],
     choices: [
-      { label: "몸소 우두성까지 나아가 해명에게 토벌을 명한다", need: { army: 30 }, fail: ["백가는 쉽게 항복하지 않았다. 가림성 포위는 해를 넘겼고, 그사이 귀족들은 새 왕의 칼끝이 얼마나 무딘지 지켜보았다."], sub: "사료 속 무령왕", eff: { power: 15, army: -5, gold: 10, nobles: -5 },
+      { label: "몸소 우두성까지 나아가 해명에게 토벌을 명한다", cast: ["sama"], need: { army: 30 }, fail: ["백가는 쉽게 항복하지 않았다. 가림성 포위는 해를 넘겼고, 그사이 귀족들은 새 왕의 칼끝이 얼마나 무딘지 지켜보았다."], sub: "사료 속 무령왕", eff: { power: 15, army: -5, gold: 10, nobles: -5 },
         res: ["백가는 성문을 열고 나와 항복했다. 당신은 그의 목을 베어 백강에 던졌다.", "그날 이후 누구도 새 왕을 '섬에서 온 왕족'이라 부르지 않았다."], go: "goguryeo" },
       { label: "항복을 받고 목숨은 살려 준다", eff: { nobles: 10, power: -10, people: 5 },
         res: ["백씨 사람들은 고개를 숙였다. 그러나 다른 귀족들은 반역해도 살 수 있다는 것을 배웠다."], go: "goguryeo" },
@@ -590,8 +606,8 @@ const N = {
   wae: {
     date: "512~513년", place: "웅진 · 나루", title: "바다 건너의 고향",
     text: [
-      "가야의 반파국이 기문 땅을 빼앗았다. 당신은 왜에 사신을 보내 이 일을 의논하려 한다.",
-      "왜는 당신이 태어난 바다 건너의 나라다. 배 한 척에 실려 백제로 왔던 아이가, 이제 배를 보내는 왕이 되었다.",
+      { text: "가야의 반파국이 기문 땅을 빼앗았다. 당신은 왜에 사신을 보내 이 일을 의논하려 한다.", bg: "gimun" },
+      { text: "왜는 당신이 태어난 바다 건너의 나라다. 배 한 척에 실려 백제로 왔던 아이가, 이제 배를 보내는 왕이 되었다.", bg: "envoy" },
       "이번 사신단에는 귀한 것을 함께 보내야 한다."
     ],
     src: ["일본서기 계체기 7년", "七年夏六月 百濟遣姐彌文貴將軍 洲利卽爾將軍 副穗積臣押山 … 貢五經博士段楊爾 別奏云 伴跛國略奪臣國己汶之地 伏願天恩判還本屬", "『일본서기』 권17 계체천황 7년 6월", "7년 여름 6월, 백제가 저미문귀 장군과 주리즉이 장군을 보내 호즈미노오미 오시야마에게 딸려 … 오경박사 단양이를 바쳤다. 따로 아뢰기를 '반파국이 신의 나라 기문 땅을 빼앗았습니다. 엎드려 바라건대 천은으로 판결하시어 본래 속한 곳으로 돌려주소서'라고 하였다."],
@@ -783,13 +799,11 @@ const CHAR = { sama: "사마(무령왕)", sama_young: "사마", sama_old: "사�
   jinro: "진로", dongseong: "동성왕", baekga: "백가", myeongnong: "명농", monk: "늙은 승려" };
 const WHO = { "개로왕": ["gaero"], "명농": ["myeongnong"] };
 /* 서술 문단에서 화면에 세워 둘 인물 */
+// 이름이 나오는 사람이 있을 때만 세운다. 인물 언급이 없는 장면은 배경만.
 const CAST = {
-  mono: ["sama_old"], hanseong: ["sama_young"], haegu: ["munju", "haegu"], dongseong: ["dongseong"], murder: ["baekga"],
-  baekga: ["sama", "baekga"], goguryeo: ["sama"], famine: ["sama"], temple: ["monk"], wae: ["sama"], liang: ["sama"],
-  funeral: ["myeongnong"],
-  end_isle: ["sama_young"], end_haegu: ["haegu"], end_shadow: ["sama_old"], end_baekga: ["baekga"], end_goguryeo: ["sama"],
-  end_revolt: ["sama"], end_coup: ["haegu"],
-  ev_flood: ["sama"], ev_gaya: ["sama"], ev_wae: ["sama"]
+  mono: ["sama_old"], dongseong: ["dongseong"], murder: ["baekga"], baekga: ["baekga"], goguryeo: ["sama"],
+  funeral: ["myeongnong"], end_haegu: ["haegu"], end_baekga: ["baekga"],
+  ev_spy: ["monk"]
 };
 
 /* ---------- 장면별 배경 (그림 파일이 생기면 IMG 에 넣는다) ---------- */
@@ -811,10 +825,15 @@ const HAVE = ["dig", "night", "sea", "fire", "river", "palace", "snow", "march",
   "tomb_brick_kinsong", "tomb_brick_wood", "tomb_stone_kinsong", "tomb_stone_wood", "end_tomb_open",
   "end_nameless", "end_isle", "end_haegu", "end_shadow", "end_baekga", "end_goguryeo", "end_revolt", "end_coup"];
 const IMG = Object.fromEntries(HAVE.map(k => [k, `assets/bg_${k}.webp`]));
+// 세로 휴대폰용 그림 (assets/bg_*_v.webp). 있으면 세로 화면에서 이 그림을 쓴다
+const HAVE_V = ["tomb", "fire", "river", "envoy", "gimun", "harbor", "flood", "funeral",
+  "palace", "march", "snow", "liang", "buddha", "field", "night",
+  "tomb_brick_kinsong", "tomb_brick_wood", "tomb_stone_kinsong", "tomb_stone_wood",
+  "end_nameless", "end_isle", "end_haegu", "end_shadow", "end_baekga", "end_goguryeo", "end_revolt", "end_coup"];
 const FALLBACK = {
   tomb_brick_kinsong: "tomb", tomb_brick_wood: "tomb", tomb_stone_kinsong: "tomb", tomb_stone_wood: "tomb",
   end_nameless: "dig", end_isle: "sea", end_haegu: "river", end_shadow: "night", end_baekga: "snow",
-  end_goguryeo: "battle", end_revolt: "field", end_coup: "palace"
+  end_goguryeo: "battle", end_revolt: "field", end_coup: "palace", gimun: "march"
 };
 
 
@@ -893,7 +912,13 @@ function tombSvg() {
 Object.values(IMG).forEach(src => { const im = new Image(); im.src = src; });
 const bgHtml = k => {
   const src = IMG[k] || IMG[FALLBACK[k]];
-  return src ? `<img src="${src}" alt="">` : svgBg(FALLBACK[k] || k);
+  if (HAVE_V.includes(k)) {
+    const v = `assets/bg_${k}_v.webp`, PORTRAIT = "(max-width: 640px) and (orientation: portrait)";
+    return `<picture><source media="${PORTRAIT}" srcset="${v}"><img class="blur" src="${src || v}" alt=""></picture>`
+      + `<picture><source media="${PORTRAIT}" srcset="${v}"><img class="main" src="${src || v}" alt=""></picture>`;
+  }
+  // 흐린 배경 그림 + 원본 그림. 세로 휴대폰의 결말 화면에서는 원본을 잘리지 않게 통째로 보여 준다
+  return src ? `<img class="blur" src="${src}" alt=""><img class="main" src="${src}" alt="">` : svgBg(FALLBACK[k] || k);
 };
 
 /* ---------- 엔딩·부장품 기록 (이 브라우저에만) ---------- */
@@ -967,6 +992,7 @@ function toLines(arr, mono, cast = []) {
   const out = [];
   for (const t of arr) {
     if (typeof t === "string") out.push({ text: t, name: mono ? "사마" : "", mono, chars: cast });
+    else if (t.text) out.push({ text: t.text, name: mono ? "사마" : "", mono, chars: t.cast || cast, bg: t.bg });
     else if (t.note && out.length) out[out.length - 1].aside = t.note;
     else if (t.note) out.push({ text: t.note, note: true, chars: cast });
     else out.push({ text: t.line, name: t.who, chars: WHO[t.who] ?? cast });
@@ -993,7 +1019,7 @@ function frame(id) {
   const n = N[id];
   document.body.classList.remove("titled");
   document.body.classList.add("playing");
-  $("stage").innerHTML = `<div class="vn${n.ev ? " ev" : ""}${n.end ? " end" : ""}" id="vn">
+  $("stage").innerHTML = `<div class="vn${n.ev ? " ev" : ""}${n.end ? " end" : ""}${(n.end || id === "epilogue") && !HAVE_V.includes(val(ART[id])) ? " fit" : ""}" id="vn">
     <div class="bg">${bgHtml(val(ART[id]) || "night")}</div>
     <div class="place"><span>${esc(n.date || n.tag || "")}${n.place ? " · " + esc(n.place) : ""}</span><b>${esc(n.title)}</b>${n.src ? `<button class="ghost srcbtn" id="srcbtn" type="button">사료 · ${esc(n.src[0])}</button>` : ""}</div>
     ${srcBox(n.src)}
@@ -1017,6 +1043,7 @@ function play(lines, done, extra = "") {
 function show() {
   const L = vn.lines[vn.i];
   setSprites(L.chars || []);
+  if (L.bg) { const b = $("vn")?.querySelector(".bg"); if (b && b.dataset.k !== L.bg) { b.dataset.k = L.bg; b.innerHTML = bgHtml(L.bg); } }
   const nm = $("name");
   nm.hidden = !L.name; nm.textContent = L.name || "";
   const line = $("line");
