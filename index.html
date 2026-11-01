@@ -389,6 +389,10 @@ html, body, .vn, .title-screen, .menu { touch-action: manipulation; }
   body.playing .box { bottom: calc(8px + env(safe-area-inset-bottom, 0px) + (100lvh - 100dvh)); }
   body.playing .menu { bottom: calc(100lvh - 100dvh); }
 }
+
+/* 그림 배경 */
+.title-screen img, .art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.vn .bg img { filter: brightness(.82) saturate(.95); }
 </style>
 </head>
 <body>
@@ -770,14 +774,16 @@ const ENDS = Object.keys(N).filter(k => N[k].end);
 
 /* ---------- 장면별 배경 (그림 파일이 생기면 IMG 에 넣는다) ---------- */
 const ART = {
-  dig: "dig", mono: "sea", hanseong: "fire", haegu: "river", dongseong: "palace",
-  murder: "snow", baekga: "battle", goguryeo: "battle", famine: "field", temple: "temple", wae: "harbor", liang: "liang",
-  funeral: "tomb", epilogue: "dig",
+  dig: "dig", mono: "night", hanseong: "fire", haegu: "river", dongseong: "palace",
+  murder: "snow", baekga: "march", goguryeo: "march", famine: "field", temple: "temple", wae: "envoy", liang: "liang",
+  funeral: "funeral", epilogue: "dig",
   end_tomb: "tomb", end_other: "tomb", end_nameless: "dig", end_isle: "sea", end_haegu: "palace", end_shadow: "dig",
   end_baekga: "snow", end_goguryeo: "battle", end_revolt: "field", end_coup: "palace",
   ev_flood: "river", ev_spy: "palace", ev_gaya: "harbor", ev_wae: "harbor"
 };
-const IMG = {};   // 예: { tomb: "assets/bg_tomb.webp" }
+// 나노바나나로 만든 배경 그림. 없는 장면은 코드로 그린 배경(SCN)을 쓴다
+const IMG = Object.fromEntries(["dig", "night", "sea", "fire", "river", "palace", "snow", "march", "battle", "field",
+  "temple", "envoy", "harbor", "liang", "funeral", "tomb"].map(k => [k, `assets/bg_${k}.webp`]));
 
 
 /* ---------- 코드로 그리는 배경 ---------- */
@@ -852,6 +858,7 @@ function tombSvg() {
     ${[380, 1220].map(x => `<path d="M${x - 46} 470 L${x - 46} 400 Q${x} 350 ${x + 46} 400 L${x + 46} 470 Z" fill="#1c140d"/><circle cx="${x}" cy="440" r="9" fill="#ffcf7a"/><circle cx="${x}" cy="440" r="60" fill="#ffb24a" opacity=".18"/>`).join("")}
     <rect width="1600" height="900" fill="url(#lt)"/></svg>`;
 }
+Object.values(IMG).forEach(src => { const im = new Image(); im.src = src; });
 const bgHtml = k => IMG[k] ? `<img src="${IMG[k]}" alt="">` : svgBg(k);
 
 /* ---------- 엔딩·부장품 기록 (이 브라우저에만) ---------- */
@@ -1066,7 +1073,7 @@ function page(html) {
 }
 function book() {
   const got = new Set(load("sama-ends")), rel = new Set(load("sama-relics"));
-  page(`<article class="scene"><div class="art">${svgBg("tomb")}</div><div class="inner"><h2>도감</h2>
+  page(`<article class="scene"><div class="art">${bgHtml("tomb")}</div><div class="inner"><h2>도감</h2>
     <p class="note">엔딩 ${got.size} / ${ENDS.length} · 부장품 ${rel.size} / ${Object.keys(RELIC).length} · 이 브라우저에만 기록됩니다.</p>
     <h3>엔딩</h3>
     <div class="book">${ENDS.map(k => got.has(k)
@@ -1084,7 +1091,7 @@ function cover() {
   reset(); cur = "cover";
   paintHud();
   page(`<div class="title-screen" id="title" role="button" tabindex="0" aria-label="게임 시작">
-    ${svgBg("tomb")}
+    ${bgHtml("tomb")}
     <div class="mast"><div class="han" lang="zh-Hant">斯麻</div><div class="ko">사마 · 무령왕, 이름을 남긴 왕</div><div class="tap">화면을 누르면 시작합니다</div></div>
   </div>`);
   document.body.classList.add("titled");
