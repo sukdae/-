@@ -380,6 +380,7 @@ let S, cur, pending = null;
 
 function reset() {
   S = Object.assign({}, START, { buddha: 0, liang: false, wae: false, rites: false, strategy: "", ascend: "", brick: false, coffin: false, stone: "", evs: 0, seen: [] });
+  S.evAt = [...EV_SLOTS].sort(() => Math.random() - .5).slice(0, EV_MAX);   // 사건이 끼어들 두 자리
   pending = null;
 }
 const clamp = v => Math.max(0, Math.min(100, v));
@@ -717,8 +718,9 @@ for (const k in EV) {
   EV[k].choices.forEach(c => { c.go = () => pending; });
   N[k] = EV[k];
 }
-const EV_SLOTS = ["haegu", "dongseong", "goguryeo", "famine", "temple", "wae", "liang"];
-const EV_MAX = 3;
+// 돌발 사건은 사마가 왕이 된 뒤(백가 반란 이후)부터만 끼어든다
+const EV_SLOTS = ["goguryeo", "famine", "temple", "wae", "liang"];
+const EV_MAX = 2;   // 한 판에 꼭 두 번. 어디서, 무엇이 나올지는 무작위
 const ENDS = Object.keys(N).filter(k => N[k].end);
 
 /* ---------- 장면별 배경 (그림 파일이 생기면 IMG 에 넣는다) ---------- */
@@ -1003,7 +1005,8 @@ function pick(c) {
   play(toLines(res), () => render(go), change(d, failed));
 }
 function maybeEvent(go) {
-  if (N[cur]?.ev || !EV_SLOTS.includes(go) || S.evs >= EV_MAX || Math.random() > 0.5) return go;
+  if (!S.evAt) S.evAt = [...EV_SLOTS].sort(() => Math.random() - .5).slice(0, EV_MAX);
+  if (N[cur]?.ev || !S.evAt.includes(go) || S.evs >= EV_MAX) return go;
   const left = Object.keys(EV).filter(k => !S.seen.includes(k));
   if (!left.length) return go;
   const k = left[Math.floor(Math.random() * left.length)];
