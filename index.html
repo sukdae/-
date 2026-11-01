@@ -281,6 +281,38 @@ body.titled header, body.titled .hud, body.titled .rel, body.titled footer { dis
   body.playing .srcpop { top: 172px; }
   body.playing .menu { padding-top: 168px; }
 }
+
+/* 다섯 수치: 그림 개수로 */
+.hud .bar { display: none; }
+.hud .stat .lab { flex-direction: column; align-items: flex-start; gap: 1px; white-space: nowrap; }
+.hud .stat .lab b { font-size: .82rem; letter-spacing: .02em; white-space: nowrap; }
+.hud .ic.off { opacity: .18; filter: grayscale(1); }
+@media (max-width: 640px) {
+  .hud, body.playing .hud { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px 6px; }
+  body.playing .hud .stat .lab { font-size: .62rem; }
+  body.playing .hud .stat .lab b { font-size: .62rem; letter-spacing: 0; }
+  body.playing .rel { top: 90px; }
+  body.playing .place { top: 130px; }
+  body.playing .srcpop { top: 158px; }
+  body.playing .menu { padding-top: 154px; }
+}
+
+/* 유물 그림 아이콘 */
+.ics { display: inline-flex; gap: 2px; vertical-align: middle; }
+.gl { width: 1.05em; height: 1.05em; display: block; filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
+.gl.off { opacity: .2; filter: none; }
+.g-power { color: #e2b85c; } .g-army { color: #b9c2c0; } .g-gold { color: #c9944a; }
+.g-nobles { color: #8fb79f; } .g-people { color: #d9b25a; } .g-buddha { color: #e6a9b4; }
+.hud .stat .lab b { font-size: .95rem; }
+.s-buddha b { font-size: .95rem !important; letter-spacing: 0 !important; }
+@media (max-width: 640px) { body.playing .hud .stat .lab b { font-size: .78rem; } }
+
+/* 우호도도 그림 개수로 */
+.rel .bar { display: none; }
+.rel .stat .lab { align-items: center; }
+.rel .stat .lab b { font-size: .95rem; }
+.g-yang { color: #d98a5b; } .g-wa { color: #8fb0d6; }
+@media (max-width: 640px) { body.playing .rel .stat .lab b { font-size: .78rem; } }
 </style>
 </head>
 <body>
@@ -753,16 +785,42 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const val = v => typeof v === "function" ? v() : v;
 
+/* 위쪽 다섯 수치와 불심은 숫자 대신 무령왕릉 유물에서 딴 그림 개수로 (20마다 하나, 최대 다섯) */
+const GLYPH = {
+  // 금제 관식: 불꽃처럼 솟은 왕의 관 꾸미개
+  power: '<path d="M8 1c1.6 2.8 4 4 3 7 1.6-.9 3 .7 2 3H3c-1-2.3.4-3.9 2-3-1-3 1.4-4.2 3-7z"/><rect x="2.5" y="12" width="11" height="2.2" rx=".6"/>',
+  // 환두대도: 둥근 고리 자루의 큰 칼
+  army: '<path d="M5.6 9.4 13.4 1.6l1.6 1.6-7.8 7.8z"/><path d="M5 9.3l1.7 1.7-1 1-1.7-1.7z"/><circle cx="3.6" cy="12.4" r="2.1" fill="none" stroke="currentColor" stroke-width="1.4"/>',
+  // 오수전: 네모난 구멍이 뚫린 동전
+  gold: '<path fill-rule="evenodd" d="M8 1.5a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13zM6.2 6.2v3.6h3.6V6.2z"/>',
+  // 관모: 은화관식을 꽂은 귀족의 모자
+  nobles: '<path d="M8 .8l.9 2.3 1.6-1.2-.5 2.3H6l-.5-2.3 1.6 1.2z"/><path d="M4.2 12c0-4.6 1.6-7.4 3.8-7.4s3.8 2.8 3.8 7.4z"/><rect x="2" y="12" width="12" height="2" rx=".8"/>',
+  // 남조 궁궐의 기와지붕: 양나라
+  yang: '<path d="M.8 6.6Q8 2.6 15.2 6.6l-1.4 1.3H2.2z"/><rect x="3.6" y="8.6" width="8.8" height="4.2"/><rect x="2" y="13.2" width="12" height="1.6" rx=".4"/><rect x="7" y="10" width="2" height="2.8" fill="#121417"/>',
+  // 돛배: 바다 건너 왜
+  wa: '<path d="M1.2 10.4h13.6l-2.2 3.4H3.4z"/><rect x="7.3" y="1.6" width="1.4" height="8.8"/><path d="M9 2.4l4.6 6.2H9z"/><path d="M7 3.6 3.2 8.6H7z" opacity=".75"/>',
+  // 볏단: 백성의 한 해 농사
+  people: '<path d="M7.3 15V7.5C7.3 5 5.5 3.4 3.5 2.8c.8 1.9 1.9 3.4 3.8 4.7M8.7 15V7.5c0-2.5 1.8-4.1 3.8-4.7-.8 1.9-1.9 3.4-3.8 4.7M7.3 15h1.4V5.2c0-1.6-.3-3-.7-4.2-.4 1.2-.7 2.6-.7 4.2z"/><rect x="5" y="10.6" width="6" height="1.4" rx=".5"/>',
+  // 연꽃: 불심
+  buddha: '<path d="M8 2c1.4 1.6 2 3.4 2 5.2 0 2-1 3.5-2 4.3-1-.8-2-2.3-2-4.3C6 5.4 6.6 3.6 8 2z"/><path d="M2 6.5c2.3.2 4.2 1.4 5.2 4.6-2.6.3-4.6-1-5.2-4.6zM14 6.5c-2.3.2-4.2 1.4-5.2 4.6 2.6.3 4.6-1 5.2-4.6z"/><path d="M3 12.5h10c-1 1.2-2.8 2-5 2s-4-.8-5-2z"/>'
+};
+const glyph = (k, on) => `<svg class="gl g-${k}${on ? "" : " off"}" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">${GLYPH[k]}</svg>`;
+function icons(k, n = Math.ceil(S[k] / 20)) {
+  n = Math.max(0, Math.min(5, n));
+  return `<span class="ics" aria-label="${NAME[k]} ${n}/5">${Array.from({ length: 5 }, (_, i) => glyph(k, i < n)).join("")}</span>`;
+}
+const ICON = { power: 1, army: 1, gold: 1, nobles: 1, people: 1, yang: 1, wa: 1 };
 function paintHud(d = {}) {
   for (const k of ALL) {
     if (typeof S[k] !== "number") S[k] = START[k];
-    $("v-" + k).innerHTML = S[k] + (d[k] ? `<span class="delta ${d[k] > 0 ? "up" : "down"}">${d[k] > 0 ? "+" : ""}${d[k]}</span>` : "");
+    const mark = d[k] ? `<span class="delta ${d[k] > 0 ? "up" : "down"}">${d[k] > 0 ? "▲" : "▼"}</span>` : "";
+    $("v-" + k).innerHTML = (ICON[k] ? icons(k) : S[k]) + mark;
     $("b-" + k).style.width = S[k] + "%";
   }
   // 불심은 얻은 뒤부터 우호 패널 아래에 보인다
   const b = Math.max(0, S.buddha || 0);
   $("buddha-row").hidden = !b;
-  $("v-buddha").textContent = "✿".repeat(Math.min(b, 5));
+  $("v-buddha").innerHTML = icons("buddha", b);
   $("b-buddha").style.width = Math.min(100, b * 20) + "%";
 }
 const josa = w => w + ((w.charCodeAt(w.length - 1) - 0xAC00) % 28 ? "이" : "가");
