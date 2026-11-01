@@ -313,6 +313,22 @@ body.titled header, body.titled .hud, body.titled .rel, body.titled footer { dis
 .rel .stat .lab b { font-size: .95rem; }
 .g-yang { color: #d98a5b; } .g-wa { color: #8fb0d6; }
 @media (max-width: 640px) { body.playing .rel .stat .lab b { font-size: .78rem; } }
+
+/* 아이콘이 칸 너비를 넘지 않게: 칸이 좁으면 그림이 작아진다 */
+.hud .stat, .rel .stat { min-width: 0; }
+.hud .stat .lab, .rel .stat .lab { min-width: 0; }
+.hud .stat .lab b, .rel .stat .lab b { display: block; min-width: 0; max-width: 100%; }
+.hud .ics, .rel .ics { display: flex; gap: 1px; max-width: 100%; }
+.hud .gl, .rel .gl { flex: 0 1 auto; min-width: 0; width: 1.05em; height: auto; aspect-ratio: 1; }
+@media (max-width: 640px) {
+  body.playing .hud .ics, body.playing .rel .ics { display: grid; grid-template-columns: repeat(5, minmax(0, 15px)); gap: 1px; width: 100%; }
+  body.playing .hud .gl, body.playing .rel .gl { width: 100%; height: auto; max-width: 15px; }
+  body.playing .rel .stat .lab { flex-direction: column; align-items: flex-start; gap: 1px; white-space: nowrap; font-size: .62rem; }
+  body.playing .rel { top: 86px; }
+  body.playing .place { top: 140px; }
+  body.playing .srcpop { top: 168px; }
+  body.playing .menu { padding-top: 164px; }
+}
 </style>
 </head>
 <body>
