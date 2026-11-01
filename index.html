@@ -393,6 +393,12 @@ html, body, .vn, .title-screen, .menu { touch-action: manipulation; }
 /* 그림 배경 */
 .title-screen img, .art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .vn .bg img { filter: brightness(.82) saturate(.95); }
+
+/* 인물 그림 */
+.sprites { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+body.playing .sprite { height: 84%; }
+@media (max-width: 640px) { body.playing .sprite { height: 62%; bottom: 18%; } body.playing .sprite.l { left: 28%; } body.playing .sprite.r { left: 72%; } }
+@media (orientation: landscape) and (max-height: 500px) { body.playing .sprite { height: 92%; bottom: 0; } }
 </style>
 </head>
 <body>
@@ -472,10 +478,10 @@ const N = {
       "477년 문주왕은 해구가 보낸 도적에게 죽었다. 열세 살 삼근왕이 섰지만, 이듬해 해구는 대두성에서 반란을 일으켰다. 진씨 가문의 진로가 토벌에 나선다."
     ],
     choices: [
-      { label: "진로의 군에 들어가 해구를 친다", fail: ["당신이 맡은 부대는 대두성 아래에서 무너졌다. 반란은 진로의 손으로 끝났고, 공은 모두 진씨의 것이 되었다."], eff: { army: 10, power: 5, nobles: -5 },
+      { label: "진로의 군에 들어가 해구를 친다", cast: ["jinro"], fail: ["당신이 맡은 부대는 대두성 아래에서 무너졌다. 반란은 진로의 손으로 끝났고, 공은 모두 진씨의 것이 되었다."], eff: { army: 10, power: 5, nobles: -5 },
         res: ["해구는 죽었다. 진씨는 백제에서 가장 큰 가문이 되었고, 진로는 당신의 이름을 기억했다."], go: "dongseong" },
       { label: "해구 편에 선다", eff: { nobles: 10 }, go: "end_haegu" },
-      { label: "금강가 초막 절에 머물며 지켜본다", eff: { people: 5, nobles: 5, power: -5 }, set: { buddha: 1 },
+      { label: "금강가 초막 절에 머물며 지켜본다", cast: ["monk"], eff: { people: 5, nobles: 5, power: -5 }, set: { buddha: 1 },
         res: ["한성에서 내려온 늙은 승려가 말했다. '도림 같은 자 때문에 부처를 원망하지 마시오. 칼을 쥔 손이 죄지, 경전이 무슨 죄겠소.'"], go: "dongseong" }
     ]
   },
@@ -772,18 +778,44 @@ const EV_SLOTS = ["goguryeo", "famine", "temple", "wae", "liang"];
 const EV_MAX = 2;   // 한 판에 꼭 두 번. 어디서, 무엇이 나올지는 무작위
 const ENDS = Object.keys(N).filter(k => N[k].end);
 
+/* ---------- 등장인물 (assets/char_*.png) ---------- */
+const CHAR = { sama: "사마(무령왕)", sama_young: "사마", sama_old: "사마", gaero: "개로왕", munju: "문주왕", haegu: "해구",
+  jinro: "진로", dongseong: "동성왕", baekga: "백가", myeongnong: "명농", monk: "늙은 승려" };
+const WHO = { "개로왕": ["gaero"], "명농": ["myeongnong"] };
+/* 서술 문단에서 화면에 세워 둘 인물 */
+const CAST = {
+  mono: ["sama_old"], hanseong: ["sama_young"], haegu: ["munju", "haegu"], dongseong: ["dongseong"], murder: ["baekga"],
+  baekga: ["sama", "baekga"], goguryeo: ["sama"], famine: ["sama"], temple: ["monk"], wae: ["sama"], liang: ["sama"],
+  funeral: ["myeongnong"],
+  end_isle: ["sama_young"], end_haegu: ["haegu"], end_shadow: ["sama_old"], end_baekga: ["baekga"], end_goguryeo: ["sama"],
+  end_revolt: ["sama"], end_coup: ["haegu"],
+  ev_flood: ["sama"], ev_gaya: ["sama"], ev_wae: ["sama"]
+};
+
 /* ---------- 장면별 배경 (그림 파일이 생기면 IMG 에 넣는다) ---------- */
 const ART = {
   dig: "dig", mono: "night", hanseong: "fire", haegu: "river", dongseong: "palace",
-  murder: "snow", baekga: "march", goguryeo: "march", famine: "field", temple: "temple", wae: "envoy", liang: "liang",
-  funeral: "funeral", epilogue: "dig",
-  end_tomb: "tomb", end_other: "tomb", end_nameless: "dig", end_isle: "sea", end_haegu: "palace", end_shadow: "dig",
-  end_baekga: "snow", end_goguryeo: "battle", end_revolt: "field", end_coup: "palace",
-  ev_flood: "river", ev_spy: "palace", ev_gaya: "harbor", ev_wae: "harbor"
+  murder: "snow", baekga: "march", goguryeo: "march", famine: "field", temple: "buddha", wae: "envoy", liang: "liang",
+  funeral: "funeral", epilogue: () => tombArt(),
+  // 결말마다 전용 그림. 무덤 결말은 양·왜와의 관계에 따라 무덤 안 모습이 달라진다
+  end_tomb: "tomb_brick_kinsong", end_other: () => tombArt(), end_nameless: "end_nameless", end_isle: "end_isle",
+  end_haegu: "end_haegu", end_shadow: "end_shadow", end_baekga: "end_baekga", end_goguryeo: "end_goguryeo",
+  end_revolt: "end_revolt", end_coup: "end_coup",
+  ev_flood: "flood", ev_spy: "palace", ev_gaya: "harbor", ev_wae: "harbor"
 };
-// 나노바나나로 만든 배경 그림. 없는 장면은 코드로 그린 배경(SCN)을 쓴다
-const IMG = Object.fromEntries(["dig", "night", "sea", "fire", "river", "palace", "snow", "march", "battle", "field",
-  "temple", "envoy", "harbor", "liang", "funeral", "tomb"].map(k => [k, `assets/bg_${k}.webp`]));
+/* 벽돌무덤(양나라 우호) × 금송 관(왜 우호) 네 가지 */
+const tombArt = () => `tomb_${S.yang >= 60 ? "brick" : "stone"}_${S.wa >= 60 ? "kinsong" : "wood"}`;
+// 나노바나나로 만든 그림. 아직 없는 그림은 FALLBACK의 비슷한 그림, 그것도 없으면 코드로 그린 배경(SCN)을 쓴다
+const HAVE = ["dig", "night", "sea", "fire", "river", "palace", "snow", "march", "battle", "field",
+  "temple", "envoy", "harbor", "liang", "funeral", "tomb", "flood", "buddha",
+  "tomb_brick_kinsong", "tomb_brick_wood", "tomb_stone_kinsong", "tomb_stone_wood", "end_tomb_open",
+  "end_nameless", "end_isle", "end_haegu", "end_shadow", "end_baekga", "end_goguryeo", "end_revolt", "end_coup"];
+const IMG = Object.fromEntries(HAVE.map(k => [k, `assets/bg_${k}.webp`]));
+const FALLBACK = {
+  tomb_brick_kinsong: "tomb", tomb_brick_wood: "tomb", tomb_stone_kinsong: "tomb", tomb_stone_wood: "tomb",
+  end_nameless: "dig", end_isle: "sea", end_haegu: "river", end_shadow: "night", end_baekga: "snow",
+  end_goguryeo: "battle", end_revolt: "field", end_coup: "palace"
+};
 
 
 /* ---------- 코드로 그리는 배경 ---------- */
@@ -859,7 +891,10 @@ function tombSvg() {
     <rect width="1600" height="900" fill="url(#lt)"/></svg>`;
 }
 Object.values(IMG).forEach(src => { const im = new Image(); im.src = src; });
-const bgHtml = k => IMG[k] ? `<img src="${IMG[k]}" alt="">` : svgBg(k);
+const bgHtml = k => {
+  const src = IMG[k] || IMG[FALLBACK[k]];
+  return src ? `<img src="${src}" alt="">` : svgBg(FALLBACK[k] || k);
+};
 
 /* ---------- 엔딩·부장품 기록 (이 브라우저에만) ---------- */
 function load(key) { try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch { return []; } }
@@ -928,15 +963,24 @@ function change(d, failed) {
   return t.length ? `<div class="changes">${t.join("")}</div>` : "";
 }
 /* 해설({note})은 따로 한 장을 차지하지 않고, 바로 앞 대사 아래에 색을 달리해 붙인다 */
-function toLines(arr, mono) {
+function toLines(arr, mono, cast = []) {
   const out = [];
   for (const t of arr) {
-    if (typeof t === "string") out.push({ text: t, name: mono ? "사마" : "", mono });
+    if (typeof t === "string") out.push({ text: t, name: mono ? "사마" : "", mono, chars: cast });
     else if (t.note && out.length) out[out.length - 1].aside = t.note;
-    else if (t.note) out.push({ text: t.note, note: true });
-    else out.push({ text: t.line, name: t.who });
+    else if (t.note) out.push({ text: t.note, note: true, chars: cast });
+    else out.push({ text: t.line, name: t.who, chars: WHO[t.who] ?? cast });
   }
   return out;
+}
+/* ---------- 인물 그림 ---------- */
+const charSrc = k => `assets/char_${k}.png`;
+Object.keys(CHAR).forEach(k => { const im = new Image(); im.src = charSrc(k); });
+function setSprites(chars) {
+  const el = $("sprites"), key = chars.join(",");
+  if (!el || el.dataset.k === key) return;
+  el.dataset.k = key;
+  el.innerHTML = chars.map((k, i) => `<img class="sprite${chars.length > 1 ? (i ? " r" : " l") : ""}" src="${charSrc(k)}" alt="${esc(CHAR[k])}">`).join("");
 }
 function srcBox(src) {
   if (!src) return "";
@@ -950,9 +994,10 @@ function frame(id) {
   document.body.classList.remove("titled");
   document.body.classList.add("playing");
   $("stage").innerHTML = `<div class="vn${n.ev ? " ev" : ""}${n.end ? " end" : ""}" id="vn">
-    <div class="bg">${bgHtml(ART[id] || "night")}</div>
+    <div class="bg">${bgHtml(val(ART[id]) || "night")}</div>
     <div class="place"><span>${esc(n.date || n.tag || "")}${n.place ? " · " + esc(n.place) : ""}</span><b>${esc(n.title)}</b>${n.src ? `<button class="ghost srcbtn" id="srcbtn" type="button">사료 · ${esc(n.src[0])}</button>` : ""}</div>
     ${srcBox(n.src)}
+    <div class="sprites" id="sprites"></div>
     <div class="box" id="box"><div class="name" id="name" hidden></div><div class="line" id="line"></div><div class="more" id="more">▼</div></div>
     <div class="menu" id="menu" hidden></div>
   </div>`;
@@ -971,6 +1016,7 @@ function play(lines, done, extra = "") {
 }
 function show() {
   const L = vn.lines[vn.i];
+  setSprites(L.chars || []);
   const nm = $("name");
   nm.hidden = !L.name; nm.textContent = L.name || "";
   const line = $("line");
@@ -1007,7 +1053,7 @@ function render(id, d = {}) {
     save("sama-ends", [id]);
     const got = relics();
     if (id === "end_tomb" || id === "end_other") save("sama-relics", got);
-    play(toLines(val(n.text)), () => {
+    play(toLines(val(n.text), false, val(CAST[id]) || []), () => {
       openMenu(`<div class="endcard"><span class="kind ${n.kind}">${esc(n.tag)}</span><h2>${esc(n.title)}</h2>
         ${got.length && (id === "end_tomb" || id === "end_other") ? `<div class="relics">${Object.keys(RELIC).map(k => `<span class="${got.includes(k) ? "on" : ""}">${esc(RELIC[k].name)}</span>`).join("")}</div>` : ""}
         <div class="fact"><b>실제로는</b> ${esc(n.fact)}</div>
@@ -1017,7 +1063,7 @@ function render(id, d = {}) {
     });
     return;
   }
-  play(toLines(val(n.text), n.mono), () => {
+  play(toLines(val(n.text), n.mono, val(CAST[id]) || []), () => {
     if (n.choices.length === 1 && n.choices[0].next) return pick(n.choices[0]);
     const m = openMenu(n.choices.map((c, i) => {
       const need = Object.entries(c.need || {});
@@ -1052,9 +1098,10 @@ function pick(c) {
     else go = maybeEvent(go);
   }
   if (!res) return render(go, d);
+  const from = cur;
   cur = go;
   paintHud(d);
-  play(toLines(res), () => render(go), change(d, failed));
+  play(toLines(res, false, c.cast || val(CAST[from]) || []), () => render(go), change(d, failed));
 }
 function maybeEvent(go) {
   if (!S.evAt) S.evAt = [...EV_SLOTS].sort(() => Math.random() - .5).slice(0, EV_MAX);
