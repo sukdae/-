@@ -185,7 +185,7 @@ body.playing .menu-in { max-width: 760px; margin: auto; }
   body.playing .sprite { height: 70%; bottom: 16%; }
   body.playing .box { width: calc(100% - 16px); bottom: 8px; height: 34%; padding: 14px 16px 24px; }
   body.playing .line { font-size: 1rem; }
-  body.playing .menu { padding-top: 150px; }
+  body.playing .menu { padding-top: 168px; }
 }
 
 /* ---------- 사마 전용 ---------- */
@@ -265,6 +265,21 @@ body.titled header, body.titled .hud, body.titled .rel, body.titled footer { dis
   body.playing .box { height: auto; min-height: 0; max-height: 40%; padding: 12px 14px 22px; bottom: 8px; }
   body.playing .line { font-size: .95rem; line-height: 1.7; }
   body.playing .name { margin: -4px 0 6px; font-size: .8rem; }
+}
+
+/* 휴대폰: 위쪽 수치를 촘촘하게 */
+@media (max-width: 640px) {
+  body.playing header { top: 6px; right: 8px; }
+  body.playing header .ghost { padding: 2px 8px; font-size: .75rem; }
+  body.playing .hud { top: 36px; padding: 5px 9px; gap: 3px 10px; }
+  body.playing .rel { top: 104px; padding: 5px 9px; gap: 3px 10px; }
+  body.playing .stat { gap: 2px; }
+  body.playing .stat .lab { font-size: .66rem; }
+  body.playing .bar { height: 4px; }
+  body.playing .place { top: 144px; font-size: .78rem; }
+  body.playing .place b { font-size: .98rem; }
+  body.playing .srcpop { top: 172px; }
+  body.playing .menu { padding-top: 168px; }
 }
 </style>
 </head>
@@ -776,6 +791,7 @@ let vn = null;
 const slow = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 function frame(id) {
   const n = N[id];
+  document.body.classList.remove("titled");
   document.body.classList.add("playing");
   $("stage").innerHTML = `<div class="vn${n.ev ? " ev" : ""}${n.end ? " end" : ""}" id="vn">
     <div class="bg">${bgHtml(ART[id] || "night")}</div>
