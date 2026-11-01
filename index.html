@@ -246,6 +246,19 @@ body.playing .hud { width: min(620px, 60vw); }
 /* 사료 창: 원문 아래 한글 번역 */
 .srcpop { max-height: min(60vh, 520px); overflow-y: auto; }
 .srcpop .ko { font-size: .92rem; line-height: 1.8; margin: 8px 0 6px; padding-top: 8px; border-top: 1px dashed var(--line); }
+
+/* 첫 화면: 제목만 */
+body.titled { padding: 0; overflow: hidden; }
+body.titled header, body.titled .hud, body.titled .rel, body.titled footer { display: none; }
+.title-screen { position: fixed; inset: 0; z-index: 20; cursor: pointer; background: #07080a; }
+.title-screen svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.title-screen::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 45%, rgba(18,20,23,.92) 85%); pointer-events: none; }
+.title-screen .mast { position: absolute; z-index: 1; left: 0; right: 0; bottom: 12vh; text-align: center; padding: 0 16px; }
+.title-screen .han { font-family: var(--f-han); font-weight: 700; color: var(--amber); font-size: clamp(3.4rem, 14vw, 7rem); letter-spacing: .18em; line-height: 1.1; text-shadow: 0 2px 24px rgba(0,0,0,.6); }
+.title-screen .ko { font-family: var(--f-display); font-weight: 800; font-size: clamp(1rem, 2.6vw, 1.4rem); letter-spacing: .3em; margin-top: 10px; text-shadow: 0 1px 10px rgba(0,0,0,.7); }
+.title-screen .tap { margin-top: 5vh; font-size: .85rem; color: var(--dim); letter-spacing: .2em; animation: blink 1.6s ease-in-out infinite; }
+.title-screen:focus-visible { outline: 2px solid var(--amber); outline-offset: -6px; }
+@media (prefers-reduced-motion: reduce) { .title-screen .tap { animation: none; } }
 </style>
 </head>
 <body>
@@ -874,7 +887,7 @@ function maybeEvent(go) {
 }
 
 function page(html) {
-  document.body.classList.remove("playing");
+  document.body.classList.remove("playing", "titled");
   $("stage").innerHTML = html;
   window.scrollTo({ top: 0 });
 }
@@ -897,31 +910,14 @@ function book() {
 function cover() {
   reset(); cur = "cover";
   paintHud();
-  page(`<article class="scene cover"><div class="art">${svgBg("tomb")}<div class="mast"><div class="han" lang="zh-Hant">斯麻</div><div class="ko">사마 · 무령왕, 이름을 남긴 왕</div></div></div><div class="inner">
-    <div class="eyebrow"><span>461~523</span><span>백제 · 한성 → 웅진</span></div>
-    <p class="lede">1971년 여름, 공주 송산리에서 배수로를 파던 삽 끝에 벽돌 하나가 걸렸다. 그 아래에는 천사백 년 동안 아무도 열지 않은 무덤이 있었고, 무덤 입구의 돌판에는 한 사람의 이름이 새겨져 있었다.</p>
-    <p>섬에서 태어나 배 한 척에 실려 백제로 온 아이. 불타는 한성을 피해 웅진으로 떠밀려 온 왕족. 형과 아우의 피 위에서 왕이 된 사람. 그가 어떻게 살았느냐에 따라, 1971년에 열릴 무덤의 모습이 달라진다.</p>
-    <h3>등장인물</h3>
-    <div class="cast">
-      <div><b>사마 · 무령왕</b>당신. 461년 각라도에서 태어났다. 아버지가 누구인지는 기록마다 다르다.</div>
-      <div><b>개로왕 · 곤지</b>한성의 왕과 그 아우. 곤지는 왜에 오래 머물렀다.</div>
-      <div><b>문주왕 · 해구</b>웅진으로 천도한 왕과, 군권을 쥔 해씨 귀족.</div>
-      <div><b>동성왕 · 백가</b>곤지의 아들 말다와, 그가 키운 위사좌평.</div>
-      <div><b>명농 · 성왕</b>당신의 아들. 마지막에 당신을 묻을 사람.</div>
-      <div><b>대성8족</b>해·진·연·백 등 웅진 백제를 함께 떠받친 큰 가문들.</div>
-    </div>
-    <h3>하는 법</h3>
-    <ul class="how">
-      <li><b>군사력</b>은 전쟁과 반란 진압에, <b>재정</b>은 구휼·공사·절 후원·사신단에 쓰인다. 텅 빈 창고로 시작하니 아껴 써야 한다.</li>
-      <li><b>왕권</b>과 <b>귀족 협력</b>의 균형이 핵심이다. 어느 하나가 0이 되면 귀족이 칼을 든다. <b>민심</b>이 0이 되면 도성이 무너진다.</li>
-      <li>오른쪽의 <b>양나라 우호</b>가 높아야 벽돌무덤을, <b>왜 우호</b>가 높아야 금송 관을 쓸 수 있다. 왕권이 아주 강하면 지석에 죽음을 천자의 글자 '붕'으로 적는다.</li>
-      <li>선택은 열에 여덟은 뜻대로 되지만, 둘은 어긋난다. 실패하면 얻는 것 없이 대가만 치른다.</li>
-      <li>엔딩마다 1971년 발굴 장면이 나오고, 무덤에서 나온 <b>부장품</b>이 도감에 모인다. 일곱 가지를 다 모아야 실제 무령왕릉이 된다.</li>
-      <li>빨간 표시는 사료에 없는 가상 사건이다. '사료' 버튼을 누르면 원문과 한글 번역이 나온다.</li>
-    </ul>
-  </div></article>
-  <div class="choices" style="margin-top:12px"><button class="choice start" id="go" type="button">시작하기</button></div>`);
-  $("go").onclick = () => render("mono");
+  page(`<div class="title-screen" id="title" role="button" tabindex="0" aria-label="게임 시작">
+    ${svgBg("tomb")}
+    <div class="mast"><div class="han" lang="zh-Hant">斯麻</div><div class="ko">사마 · 무령왕, 이름을 남긴 왕</div><div class="tap">화면을 누르면 시작합니다</div></div>
+  </div>`);
+  document.body.classList.add("titled");
+  const go = () => { document.body.classList.remove("titled"); render("mono"); };
+  $("title").onclick = go;
+  $("title").onkeydown = ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); go(); } };
 }
 function restart() { cover(); }
 $("btn-restart").onclick = restart;
