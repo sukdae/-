@@ -2,7 +2,12 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="사마">
+<meta name="theme-color" content="#121417">
 <title>사마</title>
 <meta name="description" content="사마(斯麻) — 무령왕과 무령왕릉을 소재로 한 역사 선택지 게임">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -343,6 +348,46 @@ body.titled header, body.titled .hud, body.titled .rel, body.titled footer { dis
 .slot .gl { position: absolute; inset: 0; width: 100% !important; height: 100% !important; max-width: none !important; }
 @media (max-width: 640px) {
   body.playing .hud .slot, body.playing .rel .slot { width: 100%; height: auto; aspect-ratio: 1; max-width: 15px; }
+}
+
+/* 터치: 두 번 눌러도 확대되지 않게 */
+html, body, .vn, .title-screen, .menu { touch-action: manipulation; }
+/* 노치·홈 막대 여백 (가로 화면 포함) */
+@media (min-width: 641px) {
+  body.playing header { right: calc(14px + env(safe-area-inset-right, 0px)); }
+  body.playing .hud { left: calc(14px + env(safe-area-inset-left, 0px)); }
+  body.playing .rel { right: calc(14px + env(safe-area-inset-right, 0px)); }
+  body.playing .place { left: calc(18px + env(safe-area-inset-left, 0px)); }
+  body.playing .box { bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+}
+/* 휴대폰 가로 화면: 위아래가 좁으니 전부 얇게 */
+@media (orientation: landscape) and (max-height: 500px) {
+  body.playing header { top: 6px; right: calc(8px + env(safe-area-inset-right, 0px)); }
+  body.playing header .ghost { padding: 2px 8px; font-size: .72rem; }
+  body.playing .hud { top: 6px; left: calc(8px + env(safe-area-inset-left, 0px)); right: auto; width: min(460px, 56vw); padding: 4px 10px; gap: 2px 8px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  body.playing .hud .stat .lab, body.playing .rel .stat .lab { font-size: .62rem; }
+  body.playing .hud .stat .lab b, body.playing .rel .stat .lab b { font-size: .74rem; }
+  body.playing .rel { top: 40px; right: calc(8px + env(safe-area-inset-right, 0px)); left: auto; width: 180px; padding: 4px 10px; gap: 2px; grid-template-columns: 1fr; }
+  body.playing .rel .stat .lab { flex-direction: row; justify-content: space-between; align-items: center; }
+  body.playing .place { top: 52px; left: calc(10px + env(safe-area-inset-left, 0px)); right: 200px; font-size: .72rem; }
+  body.playing .place b { font-size: .9rem; }
+  body.playing .srcpop { top: 80px; right: 200px; max-height: 60vh; }
+  body.playing .box { height: auto; min-height: 0; max-height: 44%; bottom: calc(6px + env(safe-area-inset-bottom, 0px)); padding: 10px 18px 18px; width: min(900px, calc(100% - 16px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))); }
+  body.playing .line { font-size: .9rem; line-height: 1.6; }
+  body.playing .name { margin: -2px 0 4px; font-size: .78rem; }
+  body.playing .menu { padding: 46px calc(16px + env(safe-area-inset-right, 0px)) 8px calc(16px + env(safe-area-inset-left, 0px)); }
+  body.playing .menu .choice { padding: 7px 12px; }
+  .title-screen .han { font-size: 3.4rem; }
+  .title-screen .mast { bottom: 7vh; }
+  .title-screen .tap { margin-top: 3vh; }
+}
+
+/* 휴대폰 세로: 장면은 주소창·도구 막대 뒤까지 화면 끝까지 칠하고, 대사창만 막대 위에 띄운다 */
+@media (max-width: 640px) {
+  html, body { background: #07080a; }
+  body.playing .vn, .title-screen { position: fixed; top: 0; left: 0; right: 0; bottom: auto; height: 100vh; height: 100lvh; }
+  body.playing .box { bottom: calc(8px + env(safe-area-inset-bottom, 0px) + (100lvh - 100dvh)); }
+  body.playing .menu { bottom: calc(100lvh - 100dvh); }
 }
 </style>
 </head>
