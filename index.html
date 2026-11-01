@@ -334,6 +334,16 @@ body.titled header, body.titled .hud, body.titled .rel, body.titled footer { dis
 .hud .stat, .rel .stat { position: relative; }
 .hud .stat .lab b .delta, .rel .stat .lab b .delta { position: absolute; top: 0; right: 0; margin: 0; font-size: .7rem; line-height: 1; }
 @media (max-width: 640px) { .hud .stat .lab b .delta, .rel .stat .lab b .delta { font-size: .6rem; } }
+
+/* 해설: 대사 아래 다른 색으로 */
+.line .aside { margin-top: 10px; padding-top: 8px; border-top: 1px dashed rgba(143,176,214,.35); color: #9fb6cc; font-size: .88em; line-height: 1.7; white-space: normal; }
+
+/* 그림 칸: 흐린 그림 위에 채워진 그림을 겹쳐, 채운 만큼만 보이게 */
+.slot { position: relative; display: block; width: 1.05em; height: 1.05em; flex: 0 0 auto; }
+.slot .gl { position: absolute; inset: 0; width: 100% !important; height: 100% !important; max-width: none !important; }
+@media (max-width: 640px) {
+  body.playing .hud .slot, body.playing .rel .slot { width: 100%; height: auto; aspect-ratio: 1; max-width: 15px; }
+}
 </style>
 </head>
 <body>
@@ -826,9 +836,15 @@ const GLYPH = {
   buddha: '<path d="M8 2c1.4 1.6 2 3.4 2 5.2 0 2-1 3.5-2 4.3-1-.8-2-2.3-2-4.3C6 5.4 6.6 3.6 8 2z"/><path d="M2 6.5c2.3.2 4.2 1.4 5.2 4.6-2.6.3-4.6-1-5.2-4.6zM14 6.5c-2.3.2-4.2 1.4-5.2 4.6 2.6.3 4.6-1 5.2-4.6z"/><path d="M3 12.5h10c-1 1.2-2.8 2-5 2s-4-.8-5-2z"/>'
 };
 const glyph = (k, on) => `<svg class="gl g-${k}${on ? "" : " off"}" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">${GLYPH[k]}</svg>`;
-function icons(k, n = Math.ceil(S[k] / 20)) {
-  n = Math.max(0, Math.min(5, n));
-  return `<span class="ics" aria-label="${NAME[k]} ${n}/5">${Array.from({ length: 5 }, (_, i) => glyph(k, i < n)).join("")}</span>`;
+/* 그림 하나가 20. 남는 만큼은 그림의 일부만 채워 보여서, 5만 바뀌어도 눈에 보인다.
+   불심처럼 개수로 세는 값은 n을 넘겨 통째로 채운다. */
+function icons(k, n) {
+  const v = n === undefined ? S[k] : Math.max(0, Math.min(5, n)) * 20;
+  const slots = Array.from({ length: 5 }, (_, i) => {
+    const f = Math.max(0, Math.min(1, (v - i * 20) / 20));
+    return `<span class="slot">${glyph(k, false)}${f > 0 ? glyph(k, true).replace("<svg ", `<svg style="clip-path: inset(0 ${Math.round((1 - f) * 100)}% 0 0)" `) : ""}</span>`;
+  }).join("");
+  return `<span class="ics" aria-label="${NAME[k]} ${Math.round(v / 20 * 10) / 10}/5">${slots}</span>`;
 }
 const ICON = { power: 1, army: 1, gold: 1, nobles: 1, people: 1, yang: 1, wa: 1 };
 function paintHud(d = {}) {
@@ -857,9 +873,16 @@ function change(d, failed) {
   if (failed) t.unshift(`<span class="delta down fail">뜻을 이루지 못했다</span>`);
   return t.length ? `<div class="changes">${t.join("")}</div>` : "";
 }
+/* 해설({note})은 따로 한 장을 차지하지 않고, 바로 앞 대사 아래에 색을 달리해 붙인다 */
 function toLines(arr, mono) {
-  return arr.map(t => typeof t === "string" ? { text: t, name: mono ? "사마" : "", mono }
-    : t.note ? { text: t.note, note: true } : { text: t.line, name: t.who });
+  const out = [];
+  for (const t of arr) {
+    if (typeof t === "string") out.push({ text: t, name: mono ? "사마" : "", mono });
+    else if (t.note && out.length) out[out.length - 1].aside = t.note;
+    else if (t.note) out.push({ text: t.note, note: true });
+    else out.push({ text: t.line, name: t.who });
+  }
+  return out;
 }
 function srcBox(src) {
   if (!src) return "";
@@ -900,7 +923,7 @@ function show() {
   line.className = "line" + (L.note ? " note" : "") + (L.mono ? " mono" : "");
   const tail = vn.i === vn.lines.length - 1 && vn.extra ? vn.extra : "";
   $("more").hidden = true;
-  const finish = () => { clearInterval(vn.timer); vn.typing = false; line.innerHTML = esc(L.text) + tail; $("more").hidden = false; };
+  const finish = () => { clearInterval(vn.timer); vn.typing = false; line.innerHTML = esc(L.text) + (L.aside ? `<div class="aside">${esc(L.aside)}</div>` : "") + tail; $("more").hidden = false; };
   vn.finish = finish;
   if (slow()) return finish();
   let k = 0; vn.typing = true; line.textContent = "";
